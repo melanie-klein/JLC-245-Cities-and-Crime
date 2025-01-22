@@ -18,6 +18,8 @@ library(explore)
 library(GGally)
 ```
 
+Step 1: Examine data
+
 Step 2: Read data
 ```{r data, warning=FALSE}
 dc.data2025 <- read.csv("https://opendata.arcgis.com/datasets/74d924ddc3374e3b977e6f002478cb9b_7.csv", stringsAsFactors = FALSE)
@@ -85,3 +87,5 @@ Step 8: Intro to graphing data
 
 ```
 
+robbery occurs disproportionately at midnight in DC
+homicides only have been logged as occurring at midnight in 17 years, could be a data integrity issue
