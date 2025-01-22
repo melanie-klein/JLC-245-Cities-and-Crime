@@ -20,7 +20,7 @@ library(GGally)
 
 Step 1: Examine data
 
-Step 2: Read data
+Step 2: Read data test
 ```{r data, warning=FALSE}
 dc.data2025 <- read.csv("https://opendata.arcgis.com/datasets/74d924ddc3374e3b977e6f002478cb9b_7.csv", stringsAsFactors = FALSE) 
 dc.data2024 <- read.csv("https://opendata.arcgis.com/datasets/c5a9f33ffca546babbd91de1969e742d_6.csv", stringsAsFactors = FALSE)
