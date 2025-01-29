@@ -68,8 +68,6 @@ dc.data$week <- as.numeric(dc.data$week)
 dc.data$month <- months(dc.data$date)
 #Create year
 dc.data$year <- substr(dc.data$date, 0, 4)
-#Seasons
-
 ```
 
 Step 6: Analyze data
@@ -78,14 +76,95 @@ explore(dc.data)
 ```
 
 Step 7: Visualize data
-```{r}
-
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+data.new <- select(dc.data, hour, DISTRICT, WARD, week, year)
+ggpairs(data.new, cardinality_threshold = 18) + theme_bw()
 ```
 
 Step 8: Intro to graphing data
-```{r}
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+ggplot(dc.data, aes(SHIFT)) + geom_bar(stat = "count", aes(fill = OFFENSE), position = position_stack(reverse = TRUE)) + theme_classic() + facet_wrap(~DISTRICT)
+```
+
+```{r message=FALSE, warning=FALSE}
+ggplot(dc.data, aes(SHIFT)) + geom_bar(stat = "count", aes(fill = OFFENSE), position = position_stack(reverse = TRUE)) + theme_classic() +
+  labs(
+    title = "Your title here",
+    x = "Shift",
+    y = "y axis label here"
+  ) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(),
+    axis.ticks = element_blank()
+  )
+```
+```{r message=FALSE, warning=FALSE}
+dc.data$TYPE <- case_when(
+  dc.data$OFFENSE %in%
+    c(
+      "ARSON",
+      "BURGLARY",
+      "MOTOR VEHICLE THEFT",
+      "THEFT F/AUTO",
+      "THEFT/OTHER") ~ "Property",
+  dc.data$OFFENSE %in%
+    c("ASSAULT W/DANGEROUS WEAPON", "HOMICIDE", "ROBBERY", "SEX ABUSE")
+  ~ "Person")
+```
+
+```{r message=FALSE, warning=FALSE}
+dc.data %>% ggplot() +
+  geom_line(aes(x = hour), stat = "count", group = 1, color = "blue", size = 1) +
+  labs(title = "DC Crimes by Hour Reported \n2008 - 2025", x = "Hour Reported", y = "Number of Crimes (Thousands)", fill = "Type of Crime") +
+  theme(plot.title = element_text(hjust = 0.5, size = 14),
+        axis.text.x = element_text(color = "black", size = 10),
+        axis.text.y = element_text(color = "black", size = 10),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(color = "gray"),
+        panel.background = element_blank()) +
+  scale_y_continuous(limits = c(0, 50000), breaks = c(0, 5000,10000,15000,20000,25000,30000,35000), labels = c(0,5,10,15,20,25,30,35))
 
 ```
 
+```{r message=FALSE, warning=FALSE}
+dc.data %>% filter(DISTRICT != "NA") %>%
+  ggplot() +
+  geom_bar(aes(x = as.factor(DISTRICT), fill = TYPE), stat = "count") +
+  labs(title = "Crimes by DC Police District \n2010 - 202x", x = "District", y = "Number of Crimes (Thousands)", fill = "Type of Crime") +
+  theme(plot.title = element_text(hjust = 0.5, size = 14),
+        axis.text.x = element_text(color = "black", size = 10),
+        axis.text.y = element_text(color = "black", size = 10),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(color = "gray"),
+        panel.background = element_blank()) +
+  scale_y_continuous(limits = c(0, 125000), breaks = c(0, 25000,50000,75000,100000,125000), labels = c(0,25,50,75,100,125))
+```
+```{r message=FALSE, warning=FALSE}
+dc.data %>% filter(TYPE == "Person") %>%
+  ggplot() +
+  geom_bar(aes(x = OFFENSE, fill = METHOD), position = "fill") +
+  labs(title = "DC Person Crimes by Method \n2010 - 2025", x = "Crime", y = "Proportion of Crime", fill = "Method") +
+  theme(plot.title = element_text(hjust = 0.5, size = 14),
+        axis.text.x = element_text(color = "black", size = 10),
+        axis.text.y = element_text(color = "black", size = 10),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(color = "gray"),
+        panel.background = element_blank()) +
+  scale_x_discrete(labels = c("Assault", "Homicide", "Robbery", "Sex Abuse")) +
+  scale_y_continuous(labels = c("0%", "25%", "50%", "75%", "100%")) +
+  scale_fill_manual(values = c("#1b9e77", "#d95f02","#7570b3"), labels = c("Gun", "Knife", "Other"))
+```
+
+
+
 robbery occurs disproportionately at midnight in DC
 homicides only have been logged as occurring at midnight in 17 years, could be a data integrity issue
+
+shift. crimes occur the midnight shift 20% of time. evening and day occur nearly twice. breakdown is disproportionate. crime occurs disproportionately across shifts 
+
+day of week by shift. saturday and sunday midnight shift. weekdays day and evening
