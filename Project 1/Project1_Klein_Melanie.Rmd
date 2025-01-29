@@ -6,7 +6,7 @@ output: html_document
 ---
 
 Step 0: Load and install packages
-```{r packages, message=FALSE, warning=FALSE}
+```{r packages, message=FALSE, warning=FALSE, include=FALSE}
 #install.packages('tidyverse')
 #install.packages('explore')
 #install.packages('GGally')
