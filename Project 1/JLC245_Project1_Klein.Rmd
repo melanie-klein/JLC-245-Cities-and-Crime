@@ -1,0 +1,110 @@
+---
+title: "Course Name Course Number Project Template"
+author: "Your Name"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: html_document
+---
+
+# Welcome!
+
+When you first load this file, you'll notice a banner across the top about packages needing to be installed. Click **install** - this will save you extra coding steps later.
+
+*Whenever you want to see what this output looks like*, **click the 'Knit' button.** The output file, which is an **.HTML** file, will be saved to the same folder this script is saved to. You'll notice the file name in the top left of the output window, too.
+
+# Themes
+
+The first section, lines 1-6, is the header. This is the basic version. If you'd like something fancier, you can experiment with styles. Specifically, change the **output** section to something like this:
+
+    output: 
+      cleanrmd::html_document_clean:
+        theme: markdown-modest
+        toc: yes
+        toc_float: 
+        collapsed: true
+And you'll get a new style.
+
+If you want to experiment further, swap out the **markdown-modest** theme. Here are other markdown themes to try:
+
+    “almond”, “awsm.css”, “axist”, “bamboo”, “bullframe”, "cayman", “holiday”, “kacit”, “latex.css”, “markdown-splendor”, “markdown-retro”, “markdown-air”, “markdown-modest”, “marx”, “minicss”, “new.css”, “no-class”, “picocss”, “sakura”, “sakura-vader”, “semantic”, “simplecss”, “style-sans”, “style-serif”, “stylize”, “superstylin”, “tacit”, “vanilla”, “water”, “water-dark”, “writ”
+
+# Formatting
+
+Here's a collection of text formatting/styling things you may (or may not) care about. Copy them, use them, or delete them, just don't leave all of this here when you submit your project...
+
+There's a [useful link here](https://www.rforecology.com/post/how-to-use-rmarkdown-part-one/).
+
+And here's [another one](https://sage-fenglisu-c38dfb.netlify.app/). 
+
+[Here's a great link](https://bookdown.org/yihui/rmarkdown-cookbook/kable.html) for creating tables as visuals in your file.
+
+Both of the examples above show you how to hyperlink text. That's useful when you want to cite something, without providing the URL in the text.
+
+These are different heading styles. When you 'knit' this template, you see how they differ:
+
+# Heading 1
+## Heading 2
+### Heading 3
+#### Heading 4
+##### Heading 5
+###### Heading 6
+
+### *Italics*
+### **Bold**
+### ***Bold Italicized***
+
+1. Numbered
+2. List
+3. Like
+4. This
+
+* bullet points
+- work
+* like this
+- or this
+
+# Hiding Code
+```{r, echo=FALSE, message=FALSE, results='hide', fig.show='hide', warning=FALSE, error=FALSE}
+# when you set 'echo' to false, you are hiding the block of code 
+# when you set 'message' to false, you are hiding the console text that comes after running your code
+# when you set 'results' to hide, you are hiding extra processing that occasionally shows up in the console
+# when you set fig.show to hide, you are hiding the plot output
+```
+See how the chunk of code above doesn't show up in the knitted output? It's magic, really.
+
+# Running Packages
+```{r}
+#install.packages('tidyverse')
+library(tidyverse)
+#install.packages('formatdown')
+library(formatdown)
+```
+**NOTE:** *Never ever ever include any install.packages functions.* Either comment them out with a #, or delete them.
+
+Also, if we had used the message=FALSE here, all that extra stuff would not have displayed in the knit.
+
+# Example
+```{r}
+# Data set included in formatdown
+data("metals")
+
+# Extract two columns
+DT <- metals[, .(metal, elast_mod)]
+
+# Format one column
+DT$elast_mod <- format_numbers(DT$elast_mod, digits = 3, format = "engr")
+# Format the text column
+DT$metal <- format_text(DT$metal)
+
+# Display the table
+knitr::kable(DT, col.names = c("metal", "modulus (Pa)"))
+```
+
+# Recommended Workflow
+
+1. Create a new, blank .R file for each project.
+2. Use this file to build all the things you need for a project, including examples from class and instructions.
+3. Create a .Rmd file (or *Save As* this file as a start-point).
+4. Copy/paste only the content you need from the .R file to the .Rmd file.
+5. Test, edit, proofread, knit, submit the output to Canvas.
+
+**NOTE:** When submitting your projects, you are submitting an **HTML** output of your Markdown file. You will never ever ever submit the .Rmd fie - you are submitting the knitted out of the .Rmd file.

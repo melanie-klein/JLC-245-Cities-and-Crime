@@ -86,7 +86,7 @@ Step 8: Intro to graphing data
 ggplot(dc.data, aes(SHIFT)) + geom_bar(stat = "count", aes(fill = OFFENSE), position = position_stack(reverse = TRUE)) + theme_classic() + facet_wrap(~DISTRICT)
 ```
 
-```{r message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(dc.data, aes(SHIFT)) + geom_bar(stat = "count", aes(fill = OFFENSE), position = position_stack(reverse = TRUE)) + theme_classic() +
   labs(
     title = "Your title here",
@@ -100,7 +100,7 @@ ggplot(dc.data, aes(SHIFT)) + geom_bar(stat = "count", aes(fill = OFFENSE), posi
     axis.ticks = element_blank()
   )
 ```
-```{r message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 dc.data$TYPE <- case_when(
   dc.data$OFFENSE %in%
     c(
@@ -114,7 +114,7 @@ dc.data$TYPE <- case_when(
   ~ "Person")
 ```
 
-```{r message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 dc.data %>% ggplot() +
   geom_line(aes(x = hour), stat = "count", group = 1, color = "blue", size = 1) +
   labs(title = "DC Crimes by Hour Reported \n2008 - 2025", x = "Hour Reported", y = "Number of Crimes (Thousands)", fill = "Type of Crime") +
@@ -129,7 +129,7 @@ dc.data %>% ggplot() +
 
 ```
 
-```{r message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 dc.data %>% filter(DISTRICT != "NA") %>%
   ggplot() +
   geom_bar(aes(x = as.factor(DISTRICT), fill = TYPE), stat = "count") +
@@ -143,7 +143,7 @@ dc.data %>% filter(DISTRICT != "NA") %>%
         panel.background = element_blank()) +
   scale_y_continuous(limits = c(0, 125000), breaks = c(0, 25000,50000,75000,100000,125000), labels = c(0,25,50,75,100,125))
 ```
-```{r message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 dc.data %>% filter(TYPE == "Person") %>%
   ggplot() +
   geom_bar(aes(x = OFFENSE, fill = METHOD), position = "fill") +
