@@ -5,102 +5,56 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r}
+```{r packages}
 # install.packages('R.utils')
+# install.packages('geojsonsf')
+
 library(data.table)
 library(tidyverse)
-
-election.2024 <- fread("https://int.nyt.com/newsgraphics/elections/map-data/2024/national/precincts-with-results.csv.gz")
-election.2024 <- separate(election.2024, GEOID,
-                          into = c("FIPS", "PRECINT", "PRECINT.NAME",
-                                   sep))
-```
-
-```{r intro}
-# DATA: https://www.census.gov/programs-surveys/acs/data.html
-# More data: https://data.census.gov/table
-# PACKAGE: https://walker-data.com/tidycensus/
-```
-
-```{r set-up}
-library(tidyverse)
+library(sf)
+library(geojsonsf)
 library(tidycensus)
-
-# get an API key: https://api.census.gov/data/key_signup.html
-census_api_key("YOUR API KEY GOES HERE", install = TRUE, overwrite = TRUE)
-
-# find Census variables
-variables <- load_variables(2022, "acs5", cache = TRUE)
-# just the totals
-variables.totals <- subset(variables, variables$label == 'Estimate!!Total:')
-```
-
-```{r sample queries}
-# 2022 total population by state:
-pop22 <- get_acs(geography = "state",
-                 variables = "B01003_001", 
-                 year = 2022)
-
-# 2022 total population by metropolitan statistical area:
-pop.msa.22 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
-                      variables = "B01003_001",
-                      year = 2022)
-
-# 2022 population by race by MSA:
-msa.race <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
-                    variables = c("B02008_001", "B02009_001", "B02010_001", "B02011_001"),
-                    year = 2022)
-
-# 2022 ‘component’ datasets by state:
-# The variables included in the components of change product consist of both estimates of counts and rates. 
-# Rates are preceded by an R in the variable name and are calculated per 1000 residents.
-state_components <- get_estimates(geography = "state", product = "components")
-# 2022 ‘component’ datasets by MSA:
-msa_components <- get_estimates(geography = "metropolitan statistical area/micropolitan statistical area", 
-                                product = "components")
-# 2022 county comparisons of sex, age, and hispanic populations:
-sex.age.hisp <- get_estimates(geography = "county", product = "characteristics", 
-                              breakdown = c("SEX", "AGEGROUP", "HISP"),  
-                              breakdown_labels = TRUE)
-# 2022 county comparisons of sex:
-sex.county <- get_estimates(geography = "county", product = "characteristics", breakdown = c("SEX"),  
-                            breakdown_labels = TRUE)
-# 2022 for age:
-county.age <- get_estimates(geography = "county", product = "characteristics", breakdown = c("AGEGROUP"),  
-                            breakdown_labels = TRUE)
-# 2022 migration population flows to and from an MSA:
-dc_flows <- get_flows(geography = "metropolitan statistical area",
-                      msa = 47900, # can adjust this to different areas
-                      year = 2022,
-                      geometry = TRUE)
 ```
 
 ```{r election data 2024}
-install.packages('R.utils')
-library(data.table)
 election.2024 <- fread("https://int.nyt.com/newsgraphics/elections/map-data/2024/national/precincts-with-results.csv.gz")
+election.2024 <- separate(election.2024,
+                          GEOID,
+                          into = c("FIPS", "PRECINT", "PRECINT.NAME"),
+                          sep = "-")
+names(election.2024) <- c("state", "FIPS", "PRECINT",
+                          "PRECINT.NAME", "votes_dem_2024", "votes_rep_2024",
+                          "votes_total_2024", "pct_dem_lead_2024", "official boundary")
+election.2024$pct_dem_lead_2024 <- election.2024$pct_dem_lead_2024 * 100
+
+summary.2024 <- election.2024 %>%
+  group_by(FIPS) %>%
+  summarise(sum(votes_dem_2024), sum(votes_rep_2024), sum(votes_total_2024))
+
+names(summary.2024) <- c("FIPS", "votes_dem_2024", "votes_rep_2024", "votes_total_2024")
 ```
 
 ```{r election data 2020}
-library(sf)
-install.packages('geojsonsf')
-library(geojsonsf)
 url.2020 <- 'https://int.nyt.com/newsgraphics/elections/map-data/2020/national/precincts-with-results.geojson.gz'
 file.2020 <- gzcon(url(url.2020, 'rb'))
 election.2020 <- geojson_sf(file.2020)
+election.2020 <- separate(election.2020,
+                          GEOID,
+                          into = c("FIPS", "NAME", "EXTRA"))
+names(election.2020) <- c("FIPS", "NAME", "EXTRA", "votes_dem_2020", "votes_rep_2020", "votes_total_2020", "votes_per_sqkm_2020", "pct_dem_lead_2024", "geometry")
+
+summary.2020 <- election.2020 %>%
+  group_by(FIPS) %>%
+  summarise(sum(votes_dem_2020), sum(votes_rep_2020), sum(votes_total_2020))
+
+names(summary.2020) <- c("FIPS", "votes_dem_2020", "votes_rep_2020", "votes_total_2020")
 ```
 
-```{rcensus master codes}
-library(tidycensus)
-data("fips_codes")
-```
-
-```{r sample census map}
-library(tidyverse)
+```{r census master codes and map}
 fips.subset <- c(19097, 17155, 50009, 27055, 39143, 55113, 44003, 55011, 19105, 46109, 19179, 55099, 51057)
 
 maps::county.fips %>%
-  as.tibble %>% 
+  as_tibble %>% 
   extract(polyname, c("region", "subregion"), "^([^,]+),([^,]+)$") ->
   fips.clean
 
@@ -109,9 +63,9 @@ map_data("county") %>%
   fips.all
 
 fips.all %>% 
-  mutate(is_example = fips %in% fips.subset) %>% 
+  mutate(counties = fips %in% fips.subset) %>% 
   ggplot(aes(long, lat, group = group)) +
-  geom_polygon(aes(fill=is_example), color="gray70") +
+  geom_polygon(aes(fill=counties), color="gray70") +
   coord_map() +
   scale_fill_manual(values=c("TRUE"="red", "FALSE"="gray90"))
 ```
