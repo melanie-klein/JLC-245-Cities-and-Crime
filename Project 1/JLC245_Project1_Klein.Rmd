@@ -48,13 +48,51 @@ dc.data$year <- substr(dc.data$date, 0, 4)
 ```
 
 # Finding 1
+day of week, then by shift
+saturday sunday more midnight shift. weekdays more day and evening shift
+Visual 1
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(dc.data, aes(dow)) + geom_bar(stat = "count", aes(fill = SHIFT), position = position_stack(reverse = TRUE)) + theme_classic() +
+  labs(
+    title = "Your title here",
+    x = "Shift",
+    y = "y axis label here"
+  ) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(),
+    axis.ticks = element_blank()
+  )
+```
 
 # Finding 2
 
+
 # Finding 3
+
 
 # Finding 4
 
-# Visual 1
 
 # Visual 2
+
+
+When conducting your analysis, consider this perspective:
+State a finding
+This is the new thing that you’ve identified from the data
+Provide your evidence
+This is typically a statistical reference
+Add the context 
+This is the integration of the stat(s) and the finding
+Compare your finding to the norm/average, or a similar measure in the data
+
+Analysis (4pts)
+Identify four unique analytic findings (1pt each)
+Each finding should be 3-4 sentences, and describe something specific about the data.
+Each find should include a specific statistical reference
+roughly, approximately, more than, less than
+
+Visuals (4pts)
+Include two visuals (2pts each)
+These visuals should be thoughtful and logical (make sense to someone that has never seen them before); somehow, someway referenced in the text; and analytically meaningful (provide useful, relevant, and actionable insights)
