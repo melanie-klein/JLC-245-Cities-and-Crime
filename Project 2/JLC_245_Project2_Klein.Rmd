@@ -1,0 +1,26 @@
+---
+title: "JLC_245_Project2_Klein"
+author: "Melanie Klein"
+date: "`r Sys.Date()`"
+output: html_document
+---
+```{r Install Packages, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+install.packages('tidyverse')
+install.packages('leaflet')
+install.packages('tidycensus')
+install.packages(c("cowplot", "ggrepel", "rgeos", "sf", "maps", "usmap", "ggspatial", "libwgeom", "rnaturalearth", "rnaturalearthdata"))
+```
+
+```{r Load Packages, message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(leaflet)
+library(tidycensus)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(maps)
+library(lubridate)
+library(usmap)
+library(sf)
+theme_set(theme_bw())
+```
+
