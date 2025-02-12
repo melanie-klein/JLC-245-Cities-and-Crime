@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r packages}
+```{r packages, message=FALSE, warning=FALSE}
 # install.packages('R.utils')
 # install.packages('geojsonsf')
 
@@ -16,7 +16,7 @@ library(geojsonsf)
 library(tidycensus)
 ```
 
-```{r election data 2024}
+```{r election data 2024, message=FALSE, warning=FALSE}
 election.2024 <- fread("https://int.nyt.com/newsgraphics/elections/map-data/2024/national/precincts-with-results.csv.gz")
 election.2024 <- separate(election.2024,
                           GEOID,
@@ -34,7 +34,7 @@ summary.2024 <- election.2024 %>%
 names(summary.2024) <- c("FIPS", "votes_dem_2024", "votes_rep_2024", "votes_total_2024")
 ```
 
-```{r election data 2020}
+```{r election data 2020, message=FALSE, warning=FALSE}
 url.2020 <- 'https://int.nyt.com/newsgraphics/elections/map-data/2020/national/precincts-with-results.geojson.gz'
 file.2020 <- gzcon(url(url.2020, 'rb'))
 election.2020 <- geojson_sf(file.2020)
@@ -43,14 +43,14 @@ election.2020 <- separate(election.2020,
                           into = c("FIPS", "NAME", "EXTRA"))
 names(election.2020) <- c("FIPS", "NAME", "EXTRA", "votes_dem_2020", "votes_rep_2020", "votes_total_2020", "votes_per_sqkm_2020", "pct_dem_lead_2024", "geometry")
 
-summary.2020 <- election.2020 %>%
-  group_by(FIPS) %>%
-  summarise(sum(votes_dem_2020), sum(votes_rep_2020), sum(votes_total_2020))
+#summary.2020 <- election.2020 %>%
+#  group_by(FIPS) %>%
+#  summarise(sum(votes_dem_2020), sum(votes_rep_2020), sum(votes_total_2020))
 
-names(summary.2020) <- c("FIPS", "votes_dem_2020", "votes_rep_2020", "votes_total_2020")
+#names(summary.2020) <- c("FIPS", "votes_dem_2020", "votes_rep_2020", "votes_total_2020")
 ```
 
-```{r census master codes and map}
+```{r census master codes and map, message=FALSE, warning=FALSE}
 fips.subset <- c(19097, 17155, 50009, 27055, 39143, 55113, 44003, 55011, 19105, 46109, 19179, 55099, 51057)
 
 maps::county.fips %>%
