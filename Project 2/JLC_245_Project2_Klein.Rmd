@@ -24,3 +24,106 @@ library(sf)
 theme_set(theme_bw())
 ```
 
+```{r Get Data, message=FALSE, warning=FALSE, include=FALSE}
+wapo.data <- read.csv("https://raw.githubusercontent.com/washingtonpost/data-police-shootings/master/v2/fatal-police-shootings-data.csv", stringsAsFactors = FALSE)
+```
+
+```{r Clean Data, message=FALSE, warning=FALSE, include=FALSE}
+wapo.data$date <- as.Date(wapo.data$date) # Convert the date to a date format
+wapo.data$month <- substr(wapo.data$date, 6, 7) # Create a Month field
+wapo.data$year <- substr(wapo.data$date, 0, 4) # Create a Year field
+wapo.data$yearmonth <- paste(wapo.data$year, wapo.data$month, sep = "-") # Calculate a combination of Year and Month
+wapo.data$statecity <- paste(wapo.data$state, wapo.data$city, sep = "-") # Calculate a combination of State and City
+unique(wapo.data$race) # Before adjusting multiple races
+wapo.data$race <- gsub("W;B;N|N;H|W;H|B;H|W;B|W;A", "O", wapo.data$race) # Adjust multiple races
+unique(wapo.data$race) # After adjusting multiple races
+wapo.data.map <- subset(wapo.data, !is.na(wapo.data$latitude)) # Remove records without latitude (and longitude)
+```
+
+```{r Summarize Data, echo=FALSE, message=FALSE, warning=FALSE}
+# race
+sum.race <- wapo.data %>%
+  group_by(race) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+# city
+sum.city <- wapo.data %>%
+  group_by(statecity) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+# year
+sum.year <- wapo.data %>%
+  group_by(year) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+# state
+sum.state <- wapo.data %>%
+  group_by(state) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+# manner of death
+sum.mannerofdeath <- wapo.data %>%
+  group_by(threat_type) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+# armed
+sum.armed <- wapo.data %>%
+  group_by(armed_with) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+# gender
+sum.gender <- wapo.data %>%
+  group_by(gender) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+# signs of mental illness
+sum.mentalillness <- wapo.data %>%
+  group_by(was_mental_illness_related) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+# flee
+sum.flee <- wapo.data %>%
+  group_by(flee_status) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+# body camera
+sum.bodycamera <- wapo.data %>%
+  group_by(body_camera) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+# year-month
+sum.yearmonth <- wapo.data %>%
+  group_by(yearmonth) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+# race and mental
+sum.race.mental <- wapo.data %>% 
+  group_by(race, was_mental_illness_related) %>% 
+  summarise(count = n()) %>% mutate(pct = count/sum(count)*100)
+```
+
+```{r}
+ggplot(wapo.data) +
+  geom_bar(aes(x = race), stat = "count", fill = "blue")
+```
+
+```{r}
+ggplot(sum.race.mental, aes(x = factor(race), y = pct, fill = factor(was_mental_illness_related))) + 
+  geom_bar(stat="identity", width = 0.7) + 
+  labs(title = "Police Shootings by Race and Mental Illness",
+       x = "Race", 
+       y = "percent", 
+       fill = "Mental Illness Related") + 
+  theme_minimal(base_size = 14)
+```
+
+```{r}
+ggplot(wapo.data) + geom_bar(aes(x = was_mental_illness_related), stat = "count", fill = "orange") + facet_wrap(~ race, nrow = 3)
+```
+
+
+metadata available in GitHub page
+10,428 events since 2015
+started January 2 2015, most recent is Dec 31 2024
+averages 1043 police shootings every year
+about 1100 without location data
