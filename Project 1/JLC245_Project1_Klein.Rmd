@@ -48,16 +48,21 @@ dc.data$year <- substr(dc.data$date, 0, 4)
 ```
 
 # Finding 1
-day of week, then by shift
-saturday sunday more midnight shift. weekdays more day and evening shift
-Visual 1
+The most crime incidents are typically recorded during the evening shift, followed by the day shift, and then the midnight shift. On weekdays, there are approximately 500 more crime incidents recorded per day during the day and evening shifts compared to weekends. Conversely, during the midnight shift, there are approximately 500 fewer crime incidents per day recorded on weekdays than on weekends. Given that many people stay out late on the weekends, it is likely that this contributed to the increase in crimes recorded during the midnight shift.
+
+# Visual 1
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-ggplot(dc.data, aes(dow)) + geom_bar(stat = "count", aes(fill = SHIFT), position = position_stack(reverse = TRUE)) + theme_classic() +
+dc.data$dow <- factor(dc.data$dow, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+
+ggplot(dc.data, aes(x = dow, fill = SHIFT)) + 
+  geom_bar(stat = "count", position = position_dodge(width = 0.8), width = 0.7) + 
+  theme_classic() +
   labs(
-    title = "Your title here",
-    x = "Shift",
-    y = "y axis label here"
+    title = "Crimes by Day of Week",
+    x = "Day of Week",
+    y = "Number of Crimes"
   ) +
+  guides(fill = guide_legend(title = "Shift")) +
   theme(
     panel.grid.minor = element_blank(),
     panel.grid.major.y = element_blank(),
@@ -67,32 +72,27 @@ ggplot(dc.data, aes(dow)) + geom_bar(stat = "count", aes(fill = SHIFT), position
 ```
 
 # Finding 2
-
-
-# Finding 3
-
-
-# Finding 4
-
+The ranking of districts by crime prevalence remains consistent throughout the months of the year. Districts 2 and 3 consistently report the highest crime rates, with approximately 7,500 to 10,000 incidents from 2008 to the present, and show relatively greater crime activity from June to November. In contrast, District 7, which has the second-lowest crime rate after District 8 (which records almost no crimes), reports approximately 5,000 incidents from 2008 to present.
 
 # Visual 2
 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+dc.data$DISTRICT <- factor(dc.data$DISTRICT, levels = 1:8)
+dc.data$month <- factor(dc.data$month, levels = c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"))
 
-When conducting your analysis, consider this perspective:
-State a finding
-This is the new thing that you’ve identified from the data
-Provide your evidence
-This is typically a statistical reference
-Add the context 
-This is the integration of the stat(s) and the finding
-Compare your finding to the norm/average, or a similar measure in the data
+ggplot(dc.data, aes(DISTRICT)) + 
+  geom_bar(stat = "count") + 
+  theme_classic() + 
+  facet_wrap(~month) +
+  labs(
+    title = "Crimes by District",
+    x = "District",
+    y = "Number of Crimes") +
+  scale_x_discrete(drop = FALSE) 
+```
 
-Analysis (4pts)
-Identify four unique analytic findings (1pt each)
-Each finding should be 3-4 sentences, and describe something specific about the data.
-Each find should include a specific statistical reference
-roughly, approximately, more than, less than
+# Finding 3
+From 2020 to 2022, crime in DC saw a significant decrease during the pandemic, dropping to below 30,000 incidents per year. However, in 2023, crime levels spiked slightly above pre-pandemic figures, reaching approximately 34,000 incidents. Notably, motor vehicle theft has risen sharply from 2020 to 2023, becoming the most common offense type in 2023. Given that many people were staying at home during the pandemic, it is likely that this contributed to the increase in property crimes like motor vehicle theft.
 
-Visuals (4pts)
-Include two visuals (2pts each)
-These visuals should be thoughtful and logical (make sense to someone that has never seen them before); somehow, someway referenced in the text; and analytically meaningful (provide useful, relevant, and actionable insights)
+# Finding 4
+The wards vary in both the the amount of crime that occurs and the most common method used. The most amount of crime from 2008 to present occurs in Ward 2 at over 100,000 incidents and the least amount of crime occurs in Ward 3 at just above 30,000 incidents. Interestingly, guns are the least used method in all of the wards except for Wards 5, 7, and 8 where it is the most common method.
