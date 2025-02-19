@@ -205,7 +205,7 @@ sum.race$race <- gsub("O", "Other", sum.race$race)
 names(sum.race) <- c("Race", "Count", "Shooting.PCT")
 # Second, the state table:
 # Change the abbreviations to full names
-wapo.state$State.Name <- state.name[match(wapo.state$state,state.abb)]
+sum.state$State.Name <- state.name[match(wapo.state$state,state.abb)]
 # Fix DC!
 wapo.state$State.Name <- replace_na(wapo.state$State.Name, "District of Columbia")
 # Rename the columns:
@@ -223,9 +223,6 @@ wapo.census.state <- wapo.state %>% left_join(totalpop.2023, by = "State")
 # Remove unnecessary columns
 # Rename the remaining columns
 ```
-
-
-
 
 metadata available in GitHub page
 10,428 events since 2015
@@ -247,12 +244,16 @@ header for analysis - 5 paragraphs
   city 4 + visual
   city 5 + visual
   
-  
 identify similar cities: look at
   events - look at a comparison to DC
   victims - filtering and decisions to be made there. look at DC events and see what stands out versus normal in this area
   locations - location types where they happened, hotspots
   totals vs trends - 
   
+fatal police shootings aren't happening consistently across races
   
-  fatal police shootings aren't happening consistently across races
+if talking about census data, need to talk about state race comparisons to US population in findings
+
+don't talk about cities in methods. data is how. methods is how. findings are when you talk about cities.
+
+make sure map and findings match. include visuals directly in analysis.
