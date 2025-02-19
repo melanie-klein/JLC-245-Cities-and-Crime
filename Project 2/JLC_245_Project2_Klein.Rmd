@@ -120,6 +120,111 @@ ggplot(sum.race.mental, aes(x = factor(race), y = pct, fill = factor(was_mental_
 ```{r}
 ggplot(wapo.data) + geom_bar(aes(x = was_mental_illness_related), stat = "count", fill = "orange") + facet_wrap(~ race, nrow = 3)
 ```
+```{r}
+### maps
+world <- ne_countries(scale = "medium", returnclass = "sf") # this builds a list of countries
+states <- st_as_sf(map("state", plot = FALSE, fill = TRUE)) # this cleans up the US states
+
+# transparent points
+ggplot(data = world) + 
+  geom_sf(data = states, fill = NA) + 
+  geom_point(data = wapo.data.map, aes(x = longitude, y = latitude), 
+             size = 2, alpha = 0.025) + 
+  coord_sf(xlim = c(-130, -65), ylim = c(25, 50), expand = FALSE)
+```
+
+```{r}
+ggplot(data = world) + 
+  geom_sf(data = states, fill = NA) + 
+  geom_point(data = wapo.data.map, aes(x = longitude, y = latitude), 
+             size = 2, alpha = 0.025) + 
+  coord_sf(xlim = c(-130, -65), ylim = c(25, 50), expand = FALSE) +
+  facet_wrap(~race, nrow = 3)
+```
+
+```{r}
+leaflet(wapo.data.map) %>%
+  addTiles() %>%
+  addMarkers(lng = ~longitude, lat = ~latitude, clusterOptions = markerClusterOptions())
+```
+
+```{r API key}
+census_api_key("794f37c27092be60b131e4f207abcf950f227f38", install = TRUE, overwrite = TRUE)
+```
+```{r third and fourth}
+readRenviron("~/.Renviron")
+# load the list of variables
+census.variables.2023 <- load_variables(2023, "acs5", cache = TRUE)
+# query some race statistics
+race.2023 <- get_acs(geography = "state", variables = c("B02008_001", "B02009_001", "B02010_001", "B02011_001", "B03001_003"), year = 2023)
+race.2023$variable <- gsub("B02008_001", "White", race.2023$variable)
+race.2023$variable <- gsub("B02009_001", "Black", race.2023$variable)
+race.2023$variable <- gsub("B02010_001", "Native American", race.2023$variable)
+race.2023$variable <- gsub("B02011_001", "Asian", race.2023$variable)
+race.2023$variable <- gsub("B03001_003", "Hispanic", race.2023$variable)
+race.total <- get_acs(geography = "us", variables = c("B02008_001", "B02009_001", "B02010_001", "B02011_001", "B03001_003"), year = 2023)
+race.total$variable <- gsub("B02008_001", "White", race.total$variable)
+```
+```{r fifth}
+# Fifth, query some population statistics:
+totalpop.2023 <- get_acs(geography = "state", variables = "B01003_001", year = 2023)
+# Rename the columns:
+names(totalpop.2023) <- c("GEOID", "State", "Variable", "Population", "junk")
+# Calculate the percentage of the total population for each state:
+totalpop.2023$State.PCT <- round(totalpop.2023$Population/sum(totalpop.2023$Population)*100, 2)
+```
+```{r sixth}
+# Sixth, join the total population to the race table:
+temp.race.population <- race.2023 %>% left_join(totalpop.2023, by = "GEOID")
+# left_join merges the columns from the population table to the race table, using the ‘GEOID’ as the common field
+# Only keep the relevant columns:
+race.population <- temp.race.population[c(1:4,8,10)]
+# Rename them:
+names(race.population) <- c("GEOID", "State", "Race", "Population.Race", "Population.State", "State.PCT")
+# And then calculate the percentage of the total population for each race:
+race.population$Race.PCT <- round(race.population$Population.Race/race.population$Population.State*100, 2)
+```
+
+```{r seventh}
+# Seventh, add a percentage to the nationwide race table:
+race.total$PCT <- race.total$estimate/sum(totalpop.2023$Population)*100
+# Notice, we are using the sum of the state populations from another table to calculate the values for this table
+# Rename the columns:
+names(race.total) <- c("GEOID", "Area", "Race", "Count", "moe", "Race.PCT")
+```
+
+```{r eigth}
+# First, the race table:
+sum.race$race <- gsub("W", "White", sum.race$race)
+sum.race$race <- gsub("B", "Black", sum.race$race)
+sum.race$race <- gsub("A", "Asian", sum.race$race)
+sum.race$race <- gsub("N", "Native American", sum.race$race)
+sum.race$race <- gsub("H", "Hispanic", sum.race$race)
+sum.race$race <- gsub("O", "Other", sum.race$race)
+# Rename the columns:
+names(sum.race) <- c("Race", "Count", "Shooting.PCT")
+# Second, the state table:
+# Change the abbreviations to full names
+wapo.state$State.Name <- state.name[match(wapo.state$state,state.abb)]
+# Fix DC!
+wapo.state$State.Name <- replace_na(wapo.state$State.Name, "District of Columbia")
+# Rename the columns:
+names(wapo.state) <- c("oldstate", "Count", "Shooting.PCT", "State")
+```
+
+```{r ninth}
+wapo.census.race <- wapo.race %>% left_join(race.total, by = "Race")
+# Remove unnecessary columns
+# Rename the remaining columns
+```
+
+```{r tenth}
+wapo.census.state <- wapo.state %>% left_join(totalpop.2023, by = "State")
+# Remove unnecessary columns
+# Rename the remaining columns
+```
+
+
 
 
 metadata available in GitHub page
@@ -127,3 +232,27 @@ metadata available in GitHub page
 started January 2 2015, most recent is Dec 31 2024
 averages 1043 police shootings every year
 about 1100 without location data
+
+header for data - 1 paragraph
+header for methods - 1 paragraph
+header for analysis - 5 paragraphs
+  city 1 + visual
+    What is the city
+    Reason one it’s similar
+    Stat 2
+    Reason two
+    Stat 2
+  city 2 + visual
+  city 3 + visual
+  city 4 + visual
+  city 5 + visual
+  
+  
+identify similar cities: look at
+  events - look at a comparison to DC
+  victims - filtering and decisions to be made there. look at DC events and see what stands out versus normal in this area
+  locations - location types where they happened, hotspots
+  totals vs trends - 
+  
+  
+  fatal police shootings aren't happening consistently across races
