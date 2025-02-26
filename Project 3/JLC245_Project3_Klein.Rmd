@@ -1,0 +1,88 @@
+---
+title: "JLC245_Project3_Klein"
+author: "Melanie Klein"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+Step 0: Libraries
+```{r install, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+# install.packages('tidyverse')
+# install.packages('tidycensus')
+```
+
+```{r library, message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(tidycensus)
+```
+
+Step 1: Census API key
+```{r install, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+census_api_key("edaa213942e0a762de9001c06c84d61434d3db46", install = TRUE, overwrite = TRUE)
+```
+
+```{r library, message=FALSE, warning=FALSE, include=FALSE}
+readRenviron("~/.Renviron")
+```
+
+Step 2: Find variables
+```{r}
+# all the variables
+variables <- load_variables(2023, "acs5", cache = TRUE)
+# just the totals
+variables.totals <- subset(variables, variables$label == 'Estimate!!Total:')
+```
+
+Step 3: Write queries
+```{r}
+# run a query for 2023 total population by state, like this:
+pop.msa.23 <- get_acs(geography = "state",
+                 variables = "B01003_001",
+                 year = 2023)
+
+pop.msa.22 <- get_acs(geography = "state",
+                 variables = "B01003_001",
+                 year = 2022)
+```
+
+```{r}
+# run a query for 2023 total population by metropolitan statistical area, like this:
+pop.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+                 variables = "B01003_001",
+                 year = 2023)
+# compare to DC
+pop.msa.23$diff <- abs(pop.msa.22$estimate - pop.msa.23$estimate[xxx])
+# to make this table easier to work with
+population <- subset(pop.msa.23, pop.msa.23$diff < xxxxxx)
+```
+```{r}
+# run a query for 2023 population by race by MSA, like this:
+msa.race <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+                    variables = c("B02008_001", "B02009_001", "B02010_001", "B02011_001"),
+                    year = 2023)
+# replace with codes with text
+msa.race$variable <- gsub("B02008_001", "White", msa.race$variable)
+msa.race$variable <- gsub("B02009_001", "Black", msa.race$variable)
+msa.race$variable <- gsub("B02010_001", "American Indian", msa.race$variable)
+msa.race$variable <- gsub("B02011_001", "Asian", msa.race$variable)
+# join population and race tables
+msa.race.total <- msa.race %>%
+  left_join(pop.msa.23, by = "GEOID")
+# clean up the columns
+msa.race.total <- msa.race.total[c(1:4,8,10)]
+# clean up the column names
+names(msa.race.total) <- c("GEOID", "Name", "Race", "Race.Count",
+                           "Population", "Pop.Diff")
+# calculate race percentages
+msa.race.total$race.PCT <- round(msa.race.total$Race.Count/msa.race.total$Population*100,2)
+```
+
+```{r}
+# run a query for 2023 ‘component’ datasets by MSA, like this:
+msa_components <- get_estimates(geography = "metropolitan statistical area/micropolitan statistical area", product = "components")
+```
+
+```{r}
+
+```
+
