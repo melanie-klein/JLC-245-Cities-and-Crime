@@ -257,3 +257,71 @@ if talking about census data, need to talk about state race comparisons to US po
 don't talk about cities in methods. data is how. methods is how. findings are when you talk about cities.
 
 make sure map and findings match. include visuals directly in analysis.
+
+
+
+
+```{r packages, message=FALSE, warning=FALSE}
+# install.packages('R.utils')
+# install.packages('geojsonsf')
+
+library(data.table)
+library(tidyverse)
+library(sf)
+library(geojsonsf)
+library(tidycensus)
+```
+
+```{r election data 2024, message=FALSE, warning=FALSE}
+election.2024 <- fread("https://int.nyt.com/newsgraphics/elections/map-data/2024/national/precincts-with-results.csv.gz")
+election.2024 <- separate(election.2024,
+                          GEOID,
+                          into = c("FIPS", "PRECINT", "PRECINT.NAME"),
+                          sep = "-")
+names(election.2024) <- c("state", "FIPS", "PRECINT",
+                          "PRECINT.NAME", "votes_dem_2024", "votes_rep_2024",
+                          "votes_total_2024", "pct_dem_lead_2024", "official boundary")
+election.2024$pct_dem_lead_2024 <- election.2024$pct_dem_lead_2024 * 100
+
+summary.2024 <- election.2024 %>%
+  group_by(FIPS) %>%
+  summarise(sum(votes_dem_2024), sum(votes_rep_2024), sum(votes_total_2024))
+
+names(summary.2024) <- c("FIPS", "votes_dem_2024", "votes_rep_2024", "votes_total_2024")
+```
+
+```{r election data 2020, message=FALSE, warning=FALSE}
+url.2020 <- 'https://int.nyt.com/newsgraphics/elections/map-data/2020/national/precincts-with-results.geojson.gz'
+file.2020 <- gzcon(url(url.2020, 'rb'))
+election.2020 <- geojson_sf(file.2020)
+election.2020 <- separate(election.2020,
+                          GEOID,
+                          into = c("FIPS", "NAME", "EXTRA"))
+names(election.2020) <- c("FIPS", "NAME", "EXTRA", "votes_dem_2020", "votes_rep_2020", "votes_total_2020", "votes_per_sqkm_2020", "pct_dem_lead_2024", "geometry")
+
+#summary.2020 <- election.2020 %>%
+#  group_by(FIPS) %>%
+#  summarise(sum(votes_dem_2020), sum(votes_rep_2020), sum(votes_total_2020))
+
+#names(summary.2020) <- c("FIPS", "votes_dem_2020", "votes_rep_2020", "votes_total_2020")
+```
+
+```{r census master codes and map, message=FALSE, warning=FALSE}
+fips.subset <- c(19097, 17155, 50009, 27055, 39143, 55113, 44003, 55011, 19105, 46109, 19179, 55099, 51057)
+
+maps::county.fips %>%
+  as_tibble %>% 
+  extract(polyname, c("region", "subregion"), "^([^,]+),([^,]+)$") ->
+  fips.clean
+
+map_data("county") %>% 
+  left_join(fips.clean) ->
+  fips.all
+
+fips.all %>% 
+  mutate(counties = fips %in% fips.subset) %>% 
+  ggplot(aes(long, lat, group = group)) +
+  geom_polygon(aes(fill=counties), color="gray70") +
+  coord_map() +
+  scale_fill_manual(values=c("TRUE"="red", "FALSE"="gray90"))
+```

@@ -1,72 +1,431 @@
 ---
-title: "JLC245_Project2_Klein"
+title: "JLC245 Project 2"
 author: "Melanie Klein"
 date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r packages, message=FALSE, warning=FALSE}
-# install.packages('R.utils')
-# install.packages('geojsonsf')
+```{r include=FALSE}
+# Step 0: Load and install packages
+```
 
-library(data.table)
+```{r include=FALSE}
+# install.packages('tidyverse')
+# install.packages('leaflet')
+# install.packages('tidycensus')
+# install.packages(c("cowplot", "ggrepel", "rgeos", "sf", "maps", "usmap", "ggspatial", "libwgeom", "rnaturalearth", "rnaturalearthdata"))
+```
+
+```{r include=FALSE}
 library(tidyverse)
-library(sf)
-library(geojsonsf)
+library(leaflet)
 library(tidycensus)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(maps)
+library(lubridate)
+library(usmap)
+library(sf)
+theme_set(theme_bw())
 ```
 
-```{r election data 2024, message=FALSE, warning=FALSE}
-election.2024 <- fread("https://int.nyt.com/newsgraphics/elections/map-data/2024/national/precincts-with-results.csv.gz")
-election.2024 <- separate(election.2024,
-                          GEOID,
-                          into = c("FIPS", "PRECINT", "PRECINT.NAME"),
-                          sep = "-")
-names(election.2024) <- c("state", "FIPS", "PRECINT",
-                          "PRECINT.NAME", "votes_dem_2024", "votes_rep_2024",
-                          "votes_total_2024", "pct_dem_lead_2024", "official boundary")
-election.2024$pct_dem_lead_2024 <- election.2024$pct_dem_lead_2024 * 100
-
-summary.2024 <- election.2024 %>%
-  group_by(FIPS) %>%
-  summarise(sum(votes_dem_2024), sum(votes_rep_2024), sum(votes_total_2024))
-
-names(summary.2024) <- c("FIPS", "votes_dem_2024", "votes_rep_2024", "votes_total_2024")
+```{r include=FALSE}
+# Step 1: Get data
 ```
 
-```{r election data 2020, message=FALSE, warning=FALSE}
-url.2020 <- 'https://int.nyt.com/newsgraphics/elections/map-data/2020/national/precincts-with-results.geojson.gz'
-file.2020 <- gzcon(url(url.2020, 'rb'))
-election.2020 <- geojson_sf(file.2020)
-election.2020 <- separate(election.2020,
-                          GEOID,
-                          into = c("FIPS", "NAME", "EXTRA"))
-names(election.2020) <- c("FIPS", "NAME", "EXTRA", "votes_dem_2020", "votes_rep_2020", "votes_total_2020", "votes_per_sqkm_2020", "pct_dem_lead_2024", "geometry")
-
-#summary.2020 <- election.2020 %>%
-#  group_by(FIPS) %>%
-#  summarise(sum(votes_dem_2020), sum(votes_rep_2020), sum(votes_total_2020))
-
-#names(summary.2020) <- c("FIPS", "votes_dem_2020", "votes_rep_2020", "votes_total_2020")
+```{r include=FALSE}
+wapo.data <- read.csv("https://raw.githubusercontent.com/washingtonpost/data-police-shootings/master/v2/fatal-police-shootings-data.csv", stringsAsFactors = FALSE)
 ```
 
-```{r census master codes and map, message=FALSE, warning=FALSE}
-fips.subset <- c(19097, 17155, 50009, 27055, 39143, 55113, 44003, 55011, 19105, 46109, 19179, 55099, 51057)
-
-maps::county.fips %>%
-  as_tibble %>% 
-  extract(polyname, c("region", "subregion"), "^([^,]+),([^,]+)$") ->
-  fips.clean
-
-map_data("county") %>% 
-  left_join(fips.clean) ->
-  fips.all
-
-fips.all %>% 
-  mutate(counties = fips %in% fips.subset) %>% 
-  ggplot(aes(long, lat, group = group)) +
-  geom_polygon(aes(fill=counties), color="gray70") +
-  coord_map() +
-  scale_fill_manual(values=c("TRUE"="red", "FALSE"="gray90"))
+```{r include=FALSE}
+# Step 2: Clean data
 ```
 
+```{r include=FALSE}
+# Convert the date to a date format:
+wapo.data$date <- as.Date(wapo.data$date)
+
+# Create a Month field
+wapo.data$month <- substr(wapo.data$date, 6, 7)
+
+# Create a Year field
+wapo.data$year <- substr(wapo.data$date, 0, 4)
+
+# Calculate a combination of Year and Month
+wapo.data$yearmonth <- paste(wapo.data$year, wapo.data$month, sep = "-")
+
+# Calculate a combination of State and City
+wapo.data$statecity <- paste(wapo.data$state, wapo.data$city, sep = "-")
+
+# Adjust race
+unique(wapo.data$race)
+wapo.data$race <- gsub("W;B;N|N;H|W;H|B;H|W;B|W;A", "O", wapo.data$race)
+unique(wapo.data$race)
+
+# Check the location data, and potentially get rid of blank and trash locations
+wapo.data.map <- subset(wapo.data, !is.na(wapo.data$latitude))
+```
+
+```{r include=FALSE}
+# Step 3: Summarize data
+```
+
+```{r include=FALSE}
+# race
+sum.race <- wapo.data %>%
+  group_by(race) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# city
+sum.city <- wapo.data %>%
+  group_by(statecity) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# year
+sum.year <- wapo.data %>%
+  group_by(year) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# mental illness
+sum.mental <- wapo.data %>%
+  group_by(was_mental_illness_related) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# race, mental illness
+sum.race.mental <- wapo.data %>%
+  group_by(race, was_mental_illness_related) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# city, race
+sum.city.race <- wapo.data %>%
+  group_by(statecity, race) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# city, year
+sum.city.year <- wapo.data %>%
+  group_by(statecity, year) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# city, armed with
+sum.city.armed <- wapo.data %>%
+  group_by(statecity, armed_with) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+```
+
+```{r include=FALSE}
+# Step 4: Visualize data
+```
+
+```{r include=FALSE}
+ggplot(wapo.data) +
+  geom_bar(aes(x = race), stat = "count", fill = "blue")
+```
+
+```{r include=FALSE}
+ggplot(sum.race.mental, aes(x = factor(race), y = pct, 
+                            fill = factor(was_mental_illness_related))) + 
+  geom_bar(stat="identity", width = 0.7) + 
+  labs(title = "Police Shootings by Race and Mental Illness",
+       x = "Race", y = "Percent", fill = "Mental Illness Related") + 
+  theme_minimal(base_size = 14)
+```
+
+```{r include=FALSE}
+ggplot(wapo.data) + 
+  geom_bar(aes(x = was_mental_illness_related), stat = "count", fill = "orange") + 
+  facet_wrap(~ race, nrow = 3)
+```
+
+```{r include=FALSE}
+ggplot(sum.city.armed, aes(x = statecity, y = count, fill = factor(armed_with))) + 
+  geom_bar (stat = "identity") +
+  labs(x = "State-City", y = "Number of Police Shootings", 
+       title = "Police Shootings by Victim Weapon Type", subtitle = "XXX", 
+       fill = "Victims Weapon") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{r include=FALSE}
+# clean/filter select weapons based on DC's values
+city.weapon <- subset(sum.city.armed, 
+                           armed_with %in% c("replica", "gun", "unarmed",
+                                             "knife","vehicle"))
+
+# filter to select cities based on DC's overall count
+wapo.city.select <- subset(city.weapon, statecity %in% 
+                             c("DC-Washington","FL-Orlando","MI-Detroit",
+                               "MD-Baltimore", 
+                               "TN-Memphis","NC-Charlotte","OR-Portland"))
+
+# graph
+ggplot(wapo.city.select, aes(x = statecity, y = count, 
+                             fill = factor(armed_with))) + 
+  geom_bar (stat = "identity") +
+  labs(x = "City", y = "Number of Police Shootings", 
+       title = "Police Shootings by Victim Weapon Type", 
+       subtitle = "xxx", fill = "Victims Weapon") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+```{r include=FALSE}
+### maps
+world <- ne_countries(scale = "medium", returnclass = "sf") # this builds a list of countries
+states <- st_as_sf(map("state", plot = FALSE, fill = TRUE)) # this cleans up the US states
+```
+
+```{r include=FALSE}
+# transparent points
+ggplot(data = world) + 
+  geom_sf(data = states, fill = NA) + 
+  geom_point(data = wapo.data.map, aes(x = longitude, y = latitude), 
+             size = 2, alpha = 0.025) + 
+  coord_sf(xlim = c(-130, -65), ylim = c(25, 50), expand = FALSE)
+```
+
+```{r include=FALSE}
+ggplot(data = world) + 
+  geom_sf(data = states, fill = NA) + 
+  geom_point(data = wapo.data.map, aes(x = longitude, y = latitude), 
+             size = 2, alpha = 0.025) + 
+  coord_sf(xlim = c(-130, -65), ylim = c(25, 50), expand = FALSE) +
+  facet_wrap(~race, nrow = 3)
+```
+
+```{r include=FALSE}
+leaflet(wapo.data.map) %>%
+  addTiles() %>%
+  addMarkers(lng = ~longitude, lat = ~latitude, 
+             clusterOptions = markerClusterOptions())
+```
+
+```{r include=FALSE}
+# Step 5: Fuse census data
+```
+
+```{r include=FALSE}
+census_api_key("edaa213942e0a762de9001c06c84d61434d3db46", install = TRUE, overwrite = TRUE) # run once!
+readRenviron("~/.Renviron")
+```
+```{r include=FALSE}
+census.variables.2023 <- load_variables(2023, "acs5", cache = TRUE)
+```
+
+```{r include=FALSE}
+# query some race statistics
+race.2023 <- get_acs(geography = "state", 
+                     variables = c("B02008_001", "B02009_001", 
+                                                        "B02010_001", "B02011_001", 
+                                                        "B03001_003"), 
+                     year = 2023)
+
+race.2023$variable <- gsub("B02008_001", "White", race.2023$variable)
+race.2023$variable <- gsub("B02009_001", "Black", race.2023$variable)
+race.2023$variable <- gsub("B02010_001", "Native American", race.2023$variable)
+race.2023$variable <- gsub("B02011_001", "Asian", race.2023$variable)
+race.2023$variable <- gsub("B03001_003", "Hispanic", race.2023$variable)
+```
+```{r include=FALSE}
+# total US race query
+race.total <- get_acs(geography = "us", variables = c("B02008_001", 
+                                                      "B02009_001", 
+                                                      "B02010_001", 
+                                                      "B02011_001", 
+                                                      "B03001_003"), 
+                      year = 2023)
+race.total$variable <- gsub("B02008_001", "White", race.total$variable)
+race.total$variable <- gsub("B02009_001", "Black", race.total$variable)
+race.total$variable <- gsub("B02010_001", "Native American", race.total$variable)
+race.total$variable <- gsub("B02011_001", "Asian", race.total$variable)
+race.total$variable <- gsub("B03001_003", "Hispanic", race.total$variable)
+```
+```{r include=FALSE}
+# query some population statistics
+totalpop.2023 <- get_acs(geography = "state", variables = "B01003_001", 
+                         year = 2023)
+
+names(totalpop.2023) <- c("GEOID", "State", "Variable", "Population", "junk")
+totalpop.2023$State.PCT <- round(totalpop.2023$Population/sum(totalpop.2023$Population)*100, 2)
+```
+```{r include=FALSE}
+# join the total population to the race table
+temp.race.population <- race.2023 %>% 
+  left_join(totalpop.2023, by = "GEOID")
+
+race.population <- temp.race.population[c(1:4,8,10)]
+
+names(race.population) <- c("GEOID", "State", "Race", "Population.Race", 
+                            "Population.State", "State.PCT")
+
+race.population$Race.PCT <- round(race.population$Population.Race/race.population$Population.State*100, 2)
+```
+
+```{r include=FALSE}
+# add a percentage to the nationwide race table
+race.total$PCT <- race.total$estimate/sum(totalpop.2023$Population)*100
+names(race.total) <- c("GEOID", "Area", "Race", "Count", "moe", "Race.PCT")
+```
+
+```{r include=FALSE}
+# clean up the shooting event race and state summary tables
+sum.race$race <- gsub("W", "White", sum.race$race)
+sum.race$race <- gsub("B", "Black", sum.race$race)
+sum.race$race <- gsub("A", "Asian", sum.race$race)
+sum.race$race <- gsub("N", "Native American", sum.race$race)
+sum.race$race <- gsub("H", "Hispanic", sum.race$race)
+sum.race$race <- gsub("O", "Other", sum.race$race)
+
+names(sum.race) <- c("Race", "Count", "Shooting.PCT")
+
+sum.state <- wapo.data %>%
+  group_by(state) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+sum.state$State.Name <- state.name[match(sum.state$state,state.abb)]
+
+sum.state$State.Name <- replace_na(sum.state$State.Name, "District of Columbia")
+
+names(sum.state) <- c("oldstate", "Count", "Shooting.PCT", "State")
+```
+
+```{r include=FALSE}
+# join the race tables
+wapo.census.race <- sum.race %>% left_join(race.total, by = "Race")
+wapo.census.race <- wapo.census.race[c(1:3,6,8)]
+names(wapo.census.race) <- c("Race", "Shooting.Count", "Shooting.PCT",
+                             "Population.Count", "Race.PCT")
+```
+
+```{r include=FALSE}
+# join the state tables
+wapo.census.state <- sum.state %>% left_join(totalpop.2023, by = "State")
+wapo.census.state <- wapo.census.state[c(4,2,3,7,9)]
+```
+
+```{r include=FALSE}
+# More Graphs
+```
+
+```{r include=FALSE}
+# Victim Race
+ggplot(data = wapo.census.race, aes(x = Race)) +
+  geom_bar(aes(y= Race.PCT), stat = "identity", position = "identity",
+           alpha = 0.5, fill= 'lightblue', color= 'lightblue4') +
+  geom_bar(aes(y= Shooting.PCT), stat = "identity", position = "identity",
+           alpha = 0.5, fill = 'pink', color = 'red') +
+  labs(title = "PCT of Population vs PCT of Police Shootings", 
+       subtitle = "By Race", y = "Total PCT", "Race")
+```
+```{r include=FALSE}
+# Victim State
+ggplot(data = wapo.census.state, aes(x= State)) +
+  geom_bar(aes(y = State.PCT), stat = "identity", position = "identity",
+           alpha = 0.5, fill = 'lightblue', color = 'lightblue4') +
+  geom_bar(aes(y= Shooting.PCT), stat = "identity", position = "identity",
+           alpha = 0.5, fill = 'pink', color = 'red') +
+  labs(title = "PCT of Population vs PCT of Police Shootings",
+       subtitle = "By State", y= "Total PCT", x = "State") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+```{r include=FALSE}
+sum.race.year <- wapo.data %>%
+  group_by(race, year) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# By Race over time
+ggplot() +
+  geom_line(data = sum.race.year, aes(x = year, y= count, group = race,
+                                      color = race)) +
+  labs(title = "Number of Police Shootings", subtitle = "By Year and Race") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
+# Data
+Provide a brief paragraph (3-4 sentences) on the data used in this project. This includes the specific source(s), the size, and the specific temporal and spatial constraints.
+
+metadata available in GitHub page
+10,428 events since 2015
+started January 2 2015, most recent is Dec 31 2024
+averages 1043 police shootings every year
+about 1100 without location data
+
+# Methods
+Provide a brief paragraph (3-4 sentences) on the research methods leveraged to answer this question. This includes the software, calculations, skills, techniques, and unique workflows used to analyze your data and develop an answer. You do NOT need to describe click-by-click instructions or lines of code describing how you did things; you DO need to describe a logical process that is specific enough that a reader could replicate.
+
+don't talk about cities in methods. data is how. methods is how. findings are when you talk about cities.
+
+# Analysis
+
+Using the data specific to this project, identify five cities similar to Washington, D.C. (2pts each)
+Provide justification of similarity for each city (4-5 sentences each) 
+Each justification should include at least two specific reasons for similarity
+Each reason should include a relevant statistical reference 
+
+What is the city
+Reason one it’s similar
+Stat 1
+Reason two it's similar
+Stat 2
+
+identify similar cities: look at
+  events - look at a comparison to DC
+  victims - filtering and decisions to be made there. look at DC events and see what stands out     versus normal in this area
+  locations - location types where they happened, hotspots
+  totals vs trends - 
+  
+fatal police shootings aren't happening consistently across races
+  
+if talking about census data, need to talk about state race comparisons to US population in findings
+
+make sure map and findings match. include visuals directly in analysis.
+
+## City 1
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 2
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 3
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 4
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 5
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
