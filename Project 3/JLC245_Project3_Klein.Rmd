@@ -9,19 +9,18 @@ Step 0: Libraries
 ```{r install, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 # install.packages('tidyverse')
 # install.packages('tidycensus')
+# install.packages('ggrepel')
 ```
 
 ```{r library, message=FALSE, warning=FALSE, include=FALSE}
 library(tidyverse)
 library(tidycensus)
+library(ggrepel)
 ```
 
 Step 1: Census API key
 ```{r install, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 census_api_key("edaa213942e0a762de9001c06c84d61434d3db46", install = TRUE, overwrite = TRUE)
-```
-
-```{r library, message=FALSE, warning=FALSE, include=FALSE}
 readRenviron("~/.Renviron")
 ```
 
@@ -51,9 +50,9 @@ pop.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan st
                  variables = "B01003_001",
                  year = 2023)
 # compare to DC
-pop.msa.23$diff <- abs(pop.msa.22$estimate - pop.msa.23$estimate[xxx])
+pop.msa.23$diff <- abs(pop.msa.23$estimate - pop.msa.23$estimate[893])
 # to make this table easier to work with
-population <- subset(pop.msa.23, pop.msa.23$diff < xxxxxx)
+population <- subset(pop.msa.23, pop.msa.23$diff < 4000000)
 ```
 ```{r}
 # run a query for 2023 population by race by MSA, like this:
@@ -78,11 +77,38 @@ msa.race.total$race.PCT <- round(msa.race.total$Race.Count/msa.race.total$Popula
 ```
 
 ```{r}
-# run a query for 2023 ‘component’ datasets by MSA, like this:
+# run a query for 2023 ‘component’ data sets by MSA, like this:
 msa_components <- get_estimates(geography = "metropolitan statistical area/micropolitan statistical area", product = "components")
 ```
 
 ```{r}
+dc_flows <- get_flows(
+  geography = "metropolitan statistical area",
+  msa = 47900, # can adjust this to different areas
+  year = 2020,
+  geometry = TRUE)
 
+dc.philly.atlanta <- get_flows(
+  geography = "metropolitan statistical area",
+  msa = c(47900,37980,12060),
+  year = 2020,
+  geometry = TRUE)
+
+all.flows <- get_flows(
+  geography = "metropolitan statistical area",
+  year = 2020,
+  geometry = TRUE)
 ```
+
+DC is row 893
+
+total poopulation (2023)
+Population by race (2023)
+migration flows (2020)
+income = B19019_001 median household
+education = C15010_001 # of bachelors
+poverty = B17026_001
+sex/gender
+internet usage
+travel time to work -dont want total bc equal to population, need subcategory
 
