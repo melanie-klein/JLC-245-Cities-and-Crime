@@ -1,0 +1,47 @@
+---
+title: "JLC-245 Project 4"
+author: "Melanie Klein"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+Step 0: Load and install packages
+```{r}
+# install.packages('tidyverse')
+# install.packages('explore')
+```
+
+```{r}
+library(tidyverse)
+library(explore)
+```
+
+Step 1: Get data
+```{r}
+setwd("/Users/melanie/Desktop/GitHub/Cities and Crime/Project 4")
+hate <- read.csv("hate_crime.csv", stringsAsFactors = FALSE)
+```
+
+Step 2: Inspect data
+```{r}
+# Look at the column names
+colnames(hate)
+```
+
+```{r}
+# Look at the unique values for the agency type field
+unique(hate$agency_type_name)
+```
+
+```{r}
+# Look at the unique values for the area population groups
+unique(hate$population_group_desc)
+```
+
+
+
+5 cities
+- counties, agencies/jurisdictions
+3 variables per similar city
+
+time range and number of events in the data description
