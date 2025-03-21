@@ -38,10 +38,137 @@ unique(hate$agency_type_name)
 unique(hate$population_group_desc)
 ```
 
+Step 3: Subset data
+```{r}
+# Make a subset of the data for just D.C.:
+hate.dc <- subset(hate, hate$state_abbr == 'DC')
+```
 
+```{r}
+# US
+explore(hate)
+```
+- 80% offenders are white (40%) or unknown (40%)
+- #1 location type of bar or nightclub (more than 50%)
+- overwhelmingly occur at businesses
+- most of the time it's a single offense
+- most of the time it's a single bias
+
+```{r}
+# DC
+explore(hate.dc)
+```
+- year is different than the national trend (steady increase), 2018 decrease
+- race is very different, more than 50% black or african american
+- location name very different, highway/road/alley/street/sidewalk more than 60% compared to nightclubs
+- victim type very different, almost 90% individual instead of business
+- offense and bias are in line with national
+
+Step 4: Filter data
+```{r}
+unique(hate.dc$agency_type_name)
+```
+only city and other for agency type name in DC
+
+```{r}
+# filter based on population
+hate.similar <- hate %>% 
+  filter(population_group_code == '1B') 
+```
+
+```{r}
+# cities in population 1B
+unique(hate.similar$pug_agency_name)
+```
+
+34 cities, including DC
+Went from 280k incidents to 25k incidents.
+Choose the 5 most similar to DC
+
+Step 5: Summarize data
+```{r}
+# Create a new table summarizing events per area:
+hate.events.sum <- hate.similar %>% 
+  group_by(pug_agency_name) %>%
+  summarise(count = n()) %>% 
+  mutate(pct = round(count/sum(count)*100, 2))
+
+hate.events.sum$diff <- hate.events.sum$
+  
+  
+This code generate a summary table using Step 4, grouped by name, count number of events, and adding a percentage - for percentage of all events
+Add a ‘diff’ column to calculate the difference in number of events for each area relative to D.C.
+sum.events$diff <- sum.events$count - sum.events$count[zz] # replace zz with the row number for D.C.
+Now convert that difference to an absolute value
+sum.events$abs.diff <- abs(sum.events$diff)
+Create a new table that reorders your summary table in ascending order of absolute difference
+events <- sum.events[order(sum.events$abs.diff),]
+Add a new field for ranking each area, relative to D.C.
+events$rank <- seq.int(nrow(events)) - 1
+“-1” is so D.C. becomes rank 0 instead of 1
+
+# hate.events.sum$diff <- hate.events.sum$count - hate.events.sum$count[34]
+# hate.events.sum$abs.diff <- abs(hate.events.sum$diff)
+# events <- hate.events.sum[order(hate.events.sum$abs.diff),]
+
+```
+
+
+
+# Data
+The FBI's Hate Crime Statistics dataset spans from 1991 to 2023 and includes a total of 253,776 events reported at the incident level. It provides annual statistics on hate crimes, detailing offenses, victims, and offenders motivated by bias related to race, gender, gender identity, religion, disability, sexual orientation, or ethnicity. The data is collected from law enforcement agencies through both the Summary Reporting System (SRS) and National Incident-Based Reporting System (NIBRS) forms, contributing to the UCR Program. The dataset includes hate crime incidents reported across the United States, with data collected from law enforcement agencies at the................. (local, state, and federal) levels.
+
+
+# Methods
+
+# Analysis
+
+## City 1
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 2
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 3
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 4
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 5
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
 
 5 cities
 - counties, agencies/jurisdictions
 3 variables per similar city
-
-time range and number of events in the data description
+- don't need 15 unique variables, can use as few as 3 but likely in the middle

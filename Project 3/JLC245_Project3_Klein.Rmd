@@ -112,3 +112,53 @@ sex/gender
 internet usage
 travel time to work -dont want total bc equal to population, need subcategory
 
+# Data
+
+# Methods
+
+# Analysis
+
+## City 1
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 2
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 3
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 4
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
+
+## City 5
+
+### Analysis: 
+
+### Visual:
+```{r}
+
+```
