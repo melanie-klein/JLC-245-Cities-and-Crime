@@ -71,12 +71,6 @@ wapo.data.map <- subset(wapo.data, !is.na(wapo.data$latitude))
 ```
 
 ```{r include=FALSE}
-# race
-sum.race <- wapo.data %>%
-  group_by(race) %>%
-  summarise(count = n()) %>%
-  mutate(pct = round(count/sum(count)*100,2))
-
 # city
 sum.city <- wapo.data %>%
   group_by(statecity) %>%
@@ -89,15 +83,41 @@ sum.year <- wapo.data %>%
   summarise(count = n()) %>%
   mutate(pct = round(count/sum(count)*100,2))
 
+# race
+sum.race <- wapo.data %>%
+  group_by(race) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# gender
+sum.gender <- wapo.data %>%
+  group_by(gender) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
 # mental illness
 sum.mental <- wapo.data %>%
   group_by(was_mental_illness_related) %>%
   summarise(count = n()) %>%
   mutate(pct = round(count/sum(count)*100,2))
 
-# race, mental illness
-sum.race.mental <- wapo.data %>%
-  group_by(race, was_mental_illness_related) %>%
+# armed with
+sum.armed <- wapo.data %>%
+  group_by(armed_with) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# body camera
+sum.camera <- wapo.data %>%
+  group_by(body_camera) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+```
+
+```{r include=FALSE}
+# city, year
+sum.city.year <- wapo.data %>%
+  group_by(statecity, year) %>%
   summarise(count = n()) %>%
   mutate(pct = round(count/sum(count)*100,2))
 
@@ -107,9 +127,15 @@ sum.city.race <- wapo.data %>%
   summarise(count = n()) %>%
   mutate(pct = round(count/sum(count)*100,2))
 
-# city, year
-sum.city.year <- wapo.data %>%
-  group_by(statecity, year) %>%
+# city, gender
+sum.city.gender <- wapo.data %>%
+  group_by(statecity, gender) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# city, mental illness
+sum.city.mental <- wapo.data %>%
+  group_by(statecity, was_mental_illness_related) %>%
   summarise(count = n()) %>%
   mutate(pct = round(count/sum(count)*100,2))
 
@@ -118,33 +144,30 @@ sum.city.armed <- wapo.data %>%
   group_by(statecity, armed_with) %>%
   summarise(count = n()) %>%
   mutate(pct = round(count/sum(count)*100,2))
+
+# city, body camera
+sum.city.camera <- wapo.data %>%
+  group_by(statecity, body_camera) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
 ```
 
 ```{r include=FALSE}
 # Step 4: Visualize data
 ```
 
-```{r include=FALSE}
+```{r eval=FALSE, include=FALSE}
 ggplot(wapo.data) +
   geom_bar(aes(x = race), stat = "count", fill = "blue")
 ```
 
-```{r include=FALSE}
-ggplot(sum.race.mental, aes(x = factor(race), y = pct, 
-                            fill = factor(was_mental_illness_related))) + 
-  geom_bar(stat="identity", width = 0.7) + 
-  labs(title = "Police Shootings by Race and Mental Illness",
-       x = "Race", y = "Percent", fill = "Mental Illness Related") + 
-  theme_minimal(base_size = 14)
-```
-
-```{r include=FALSE}
+```{r eval=FALSE, include=FALSE}
 ggplot(wapo.data) + 
   geom_bar(aes(x = was_mental_illness_related), stat = "count", fill = "orange") + 
   facet_wrap(~ race, nrow = 3)
 ```
 
-```{r include=FALSE}
+```{r eval=FALSE, include=FALSE}
 ggplot(sum.city.armed, aes(x = statecity, y = count, fill = factor(armed_with))) + 
   geom_bar (stat = "identity") +
   labs(x = "State-City", y = "Number of Police Shootings", 
@@ -152,7 +175,8 @@ ggplot(sum.city.armed, aes(x = statecity, y = count, fill = factor(armed_with)))
        fill = "Victims Weapon") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-```{r include=FALSE}
+
+```{r eval=FALSE, include=FALSE}
 # clean/filter select weapons based on DC's values
 city.weapon <- subset(sum.city.armed, 
                            armed_with %in% c("replica", "gun", "unarmed",
@@ -160,9 +184,10 @@ city.weapon <- subset(sum.city.armed,
 
 # filter to select cities based on DC's overall count
 wapo.city.select <- subset(city.weapon, statecity %in% 
-                             c("DC-Washington","FL-Orlando","MI-Detroit",
-                               "MD-Baltimore", 
-                               "TN-Memphis","NC-Charlotte","OR-Portland"))
+                             c("DC-Washington","FL-Orlando",
+                               "MI-Detroit", "MD-Baltimore", 
+                               "TN-Memphis","NC-Charlotte",
+                               "OR-Portland"))
 
 # graph
 ggplot(wapo.city.select, aes(x = statecity, y = count, 
@@ -173,13 +198,14 @@ ggplot(wapo.city.select, aes(x = statecity, y = count,
        subtitle = "xxx", fill = "Victims Weapon") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
-```{r include=FALSE}
+
+```{r eval=FALSE, include=FALSE}
 ### maps
 world <- ne_countries(scale = "medium", returnclass = "sf") # this builds a list of countries
 states <- st_as_sf(map("state", plot = FALSE, fill = TRUE)) # this cleans up the US states
 ```
 
-```{r include=FALSE}
+```{r eval=FALSE, include=FALSE}
 # transparent points
 ggplot(data = world) + 
   geom_sf(data = states, fill = NA) + 
@@ -188,7 +214,7 @@ ggplot(data = world) +
   coord_sf(xlim = c(-130, -65), ylim = c(25, 50), expand = FALSE)
 ```
 
-```{r include=FALSE}
+```{r eval=FALSE, include=FALSE}
 ggplot(data = world) + 
   geom_sf(data = states, fill = NA) + 
   geom_point(data = wapo.data.map, aes(x = longitude, y = latitude), 
@@ -197,7 +223,7 @@ ggplot(data = world) +
   facet_wrap(~race, nrow = 3)
 ```
 
-```{r include=FALSE}
+```{r eval=FALSE, include=FALSE}
 leaflet(wapo.data.map) %>%
   addTiles() %>%
   addMarkers(lng = ~longitude, lat = ~latitude, 
@@ -212,6 +238,7 @@ leaflet(wapo.data.map) %>%
 census_api_key("edaa213942e0a762de9001c06c84d61434d3db46", install = TRUE, overwrite = TRUE) # run once!
 readRenviron("~/.Renviron")
 ```
+
 ```{r include=FALSE}
 census.variables.2023 <- load_variables(2023, "acs5", cache = TRUE)
 ```
@@ -230,6 +257,7 @@ race.2023$variable <- gsub("B02010_001", "Native American", race.2023$variable)
 race.2023$variable <- gsub("B02011_001", "Asian", race.2023$variable)
 race.2023$variable <- gsub("B03001_003", "Hispanic", race.2023$variable)
 ```
+
 ```{r include=FALSE}
 # total US race query
 race.total <- get_acs(geography = "us", variables = c("B02008_001", 
@@ -244,6 +272,7 @@ race.total$variable <- gsub("B02010_001", "Native American", race.total$variable
 race.total$variable <- gsub("B02011_001", "Asian", race.total$variable)
 race.total$variable <- gsub("B03001_003", "Hispanic", race.total$variable)
 ```
+
 ```{r include=FALSE}
 # query some population statistics
 totalpop.2023 <- get_acs(geography = "state", variables = "B01003_001", 
@@ -252,6 +281,7 @@ totalpop.2023 <- get_acs(geography = "state", variables = "B01003_001",
 names(totalpop.2023) <- c("GEOID", "State", "Variable", "Population", "junk")
 totalpop.2023$State.PCT <- round(totalpop.2023$Population/sum(totalpop.2023$Population)*100, 2)
 ```
+
 ```{r include=FALSE}
 # join the total population to the race table
 temp.race.population <- race.2023 %>% 
@@ -294,6 +324,16 @@ names(sum.state) <- c("oldstate", "Count", "Shooting.PCT", "State")
 ```
 
 ```{r include=FALSE}
+# clean up the city race table
+sum.city.race$race <- gsub("W", "White", sum.city.race$race)
+sum.city.race$race <- gsub("B", "Black", sum.city.race$race)
+sum.city.race$race <- gsub("A", "Asian", sum.city.race$race)
+sum.city.race$race <- gsub("N", "Native American", sum.city.race$race)
+sum.city.race$race <- gsub("H", "Hispanic", sum.city.race$race)
+sum.city.race$race <- gsub("O", "Other", sum.city.race$race)
+```
+
+```{r include=FALSE}
 # join the race tables
 wapo.census.race <- sum.race %>% left_join(race.total, by = "Race")
 wapo.census.race <- wapo.census.race[c(1:3,6,8)]
@@ -311,7 +351,7 @@ wapo.census.state <- wapo.census.state[c(4,2,3,7,9)]
 # More Graphs
 ```
 
-```{r include=FALSE}
+```{r eval=FALSE, include=FALSE}
 # Victim Race
 ggplot(data = wapo.census.race, aes(x = Race)) +
   geom_bar(aes(y= Race.PCT), stat = "identity", position = "identity",
@@ -321,7 +361,7 @@ ggplot(data = wapo.census.race, aes(x = Race)) +
   labs(title = "PCT of Population vs PCT of Police Shootings", 
        subtitle = "By Race", y = "Total PCT", "Race")
 ```
-```{r include=FALSE}
+```{r eval=FALSE, include=FALSE}
 # Victim State
 ggplot(data = wapo.census.state, aes(x= State)) +
   geom_bar(aes(y = State.PCT), stat = "identity", position = "identity",
@@ -332,6 +372,7 @@ ggplot(data = wapo.census.state, aes(x= State)) +
        subtitle = "By State", y= "Total PCT", x = "State") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
+
 ```{r include=FALSE}
 sum.race.year <- wapo.data %>%
   group_by(race, year) %>%
@@ -346,86 +387,146 @@ ggplot() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
-# Data
-Provide a brief paragraph (3-4 sentences) on the data used in this project. This includes the specific source(s), the size, and the specific temporal and spatial constraints.
+```{r include=FALSE}
+# personal analysis
 
-metadata available in GitHub page
-10,428 events since 2015
-started January 2 2015, most recent is Dec 31 2024
-averages 1043 police shootings every year
-about 1100 without location data
+# city, armed with, gun
+sum.city.armed.gun <- sum.city.armed %>%
+  filter(armed_with == "gun")
+
+# city, body camera, true
+sum.city.camera.true <- sum.city.camera %>%
+  filter(body_camera == "True")
+
+# city, gender, female
+sum.city.gender.female <- sum.city.gender %>%
+  filter(gender == "female")
+
+# city, gender, male
+sum.city.gender.male <- sum.city.gender %>%
+  filter(gender == "male")
+
+# city, mental illness, true
+sum.city.mental.true <- sum.city.mental %>%
+  filter(was_mental_illness_related == "True")
+
+# city, race, black
+sum.city.race.black <- sum.city.race %>%
+  filter(race == "Black")
+```
+
+# Data
+For the Fatal Force Database, The Washington Post collected and aggregated data on each police-involved shooting in the United States by manually gathering information from local news reports, law enforcement websites, social media, and independent databases. Each record includes details such as the location of the shooting, information about the victim, and data related to law enforcement. The dataset covers incidents from January 2, 2015, through December 31, 2024. A total of 10,428 police-involved shootings are recorded, with 1,131 cases missing location data. This dataset is more comprehensive than those maintained by the FBI and CDC which track fatal police shootings. Additional metadata and documentation are available on the GitHub repository where the dataset is published.
 
 # Methods
-Provide a brief paragraph (3-4 sentences) on the research methods leveraged to answer this question. This includes the software, calculations, skills, techniques, and unique workflows used to analyze your data and develop an answer. You do NOT need to describe click-by-click instructions or lines of code describing how you did things; you DO need to describe a logical process that is specific enough that a reader could replicate.
+To better understand police-involved shootings in the United States, events from the Fatal Force database were analyzed. The data was first summarized at the national level across multiple features, including year, race, mental illness, weapon type armed with, and body camera usage. The same variables were then used to summarize data at the city level. National-level patterns were compared to trends in Washington, D.C. to assess alignment. Finally, city-level data was visualized to identify other cities with patterns similar to those observed in Washington, D.C.
 
-don't talk about cities in methods. data is how. methods is how. findings are when you talk about cities.
+## City 1: San Bernardino, CA
+San Bernardino, CA is similar to Washington, D.C. based on the attributes of the total number of police-involved killings and the type of weapon the person was armed with. Specifically, for the total number of police-involved killings, 30 police-involved killings have occurred in San Bernardino, CA, which is equal to the 30 police-involved killings that have occurred in Washington, D.C. Each city makes up 0.29% of the total number of police-involved killings in the United States. Specifically, for the type of weapon the person was armed with, 56.67% of police-involved killings in San Bernardino, CA had a person armed with a gun, which is equal to the 56.67% of police-involved killings in Washington, D.C. that had a person armed with a gun. Both cities had 17 people armed with a gun who were in a police-involved killing.
 
-# Analysis
-
-Using the data specific to this project, identify five cities similar to Washington, D.C. (2pts each)
-Provide justification of similarity for each city (4-5 sentences each) 
-Each justification should include at least two specific reasons for similarity
-Each reason should include a relevant statistical reference 
-
-What is the city
-Reason one it’s similar
-Stat 1
-Reason two it's similar
-Stat 2
-
-identify similar cities: look at
-  events - look at a comparison to DC
-  victims - filtering and decisions to be made there. look at DC events and see what stands out     versus normal in this area
-  locations - location types where they happened, hotspots
-  totals vs trends - 
-  
-fatal police shootings aren't happening consistently across races
-  
-if talking about census data, need to talk about state race comparisons to US population in findings
-
-make sure map and findings match. include visuals directly in analysis.
-
-## City 1
-
-### Analysis: 
-
-### Visual:
-```{r}
-
+```{r echo=FALSE}
+ggplot(sum.city %>%
+         filter(pct >= 0.27, pct <= 0.32) %>%
+         mutate(highlight.sanbernardino = ifelse(statecity %in% c("CA-San Bernardino", "DC-Washington"), "Highlighted", "Other")), 
+       aes(y = reorder(statecity, count), x = count, fill = highlight.sanbernardino)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("Highlighted" = "red", "Other" = "steelblue"), guide = "none") +
+  scale_x_continuous(breaks = seq(0, 34, by = 2)) +
+  labs(title = "Number of Police-Involved Killings in the U.S. by City",
+       x = "Number of Police-Involved Killings in the U.S.",
+       y = "City") +
+  theme_minimal()
 ```
 
-## City 2
+## City 2: Sacramento, CA
+Sacramento, CA is similar to Washington, D.C. based on the attributes of the total number of police-involved killings and whether the police officer wore a body camera. Specifically, for the total number of police-involved killings, 27 police-involved killings have occurred in Sacramento, CA which is only 3 less than the 30 police-involved killings that have occurred in Washington, D.C. Sacramento, CA makes up 0.26% and Washington, D.C makes up 0.29% of the total number of police-involved killings in the United States. Specifically, for whether the police officer wore a body camera, 48.15% of police-involved killings in Sacramento, CA had a police officer wearing a body camera which is only 1.48% greater than the 46.67% of police-involved killings in Washington, D.C. that had a police officer wearing a body camera. Sacramento, CA had 13 instances and Washington, D.C. had 14 instances of police-involved killings that had a police officer wearing a body camera.
 
-### Analysis: 
+```{r echo=FALSE}
+cities_to_include <- sum.city.camera %>%
+  filter(body_camera == "True", pct >= 44.44, pct <= 48.48) %>%
+  pull(statecity)
 
-### Visual:
-```{r}
+library(forcats)
 
+ggplot(sum.city.camera %>%
+         filter(statecity %in% cities_to_include) %>%
+         mutate(highlight.sacramento = ifelse(statecity %in% c("CA-Sacramento", "DC-Washington"), 
+                                              "Highlighted", "Other")) %>%
+         group_by(statecity) %>%
+         mutate(ordering_value = ifelse(body_camera == "True", pct, NA_real_)) %>%
+         fill(ordering_value, .direction = "downup") %>%
+         ungroup(),
+       aes(y = fct_reorder(statecity, ordering_value), 
+           x = pct, fill = body_camera)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0(round(pct, 1), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 3.5) +
+  scale_fill_manual(values = c("True" = "steelblue", "False" = "red")) +
+  scale_x_continuous(breaks = seq(0, 100, by = 5)) +
+  labs(title = "Percent of Police Officers Wearing a Body Camera by City",
+       x = "Percent",
+       y = "City",
+       fill = "Body Camera") +
+  theme_minimal()
 ```
 
-## City 3
+## City 3: Baltimore, MD
+Baltimore, MD is similar to Washington, D.C. based on the attributes of whether the police officer wore a body camera and the race of the person. Specifically, for whether the police officer wore a body camera, 48.48% of police-involved killings in Baltimore, MD had a police officer wearing a body camera which is only 1.81% greater than the 46.67% of police-involved killings in Washington, D.C. that had a police officer wearing a body camera. Baltimore, MD had 16 instances and Washington, D.C. had 14 instances of police-involved killings that had a police officer wearing a body camera. Specifically, for the race of the person, 96.97% of police-involved killings in Baltimore, MD were of a Black person which is only 6.97% greater than the 90% of police-involved killings in Washington, DC that were of a Black person. Baltimore, MD had 32 people and Washington, DC had 27 people who were Black and in a police-involved killing.
 
-### Analysis: 
-
-### Visual:
-```{r}
-
+```{r echo=FALSE}
+ggplot(sum.city.race %>%
+         filter(statecity %in% c("MD-Baltimore", "DC-Washington")), 
+       aes(x = statecity, y = pct, fill = factor(race, levels = c("W", "B")))) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("B" = "blue", "W" = "red"),
+                    labels = c("B" = "Black", "W" = "White")) +
+  labs(title = "Race Distribution in Washington, D.C. and Baltimore, MD",
+       x = "City",
+       y = "Percentage",
+       fill = "Race") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), 
+                     breaks = seq(0, 100, by = 10))
 ```
 
-## City 4
+## City 4: San Francisco, CA
+San Francisco, CA is similar to Washington, D.C. based on the attributes of the total number of police-involved killings and the yearly trend of police-involved killings from 2015 to 2024. Specifically, for the total number of police-involved killings, 26 police-involved killings have occurred in San Francisco, CA which is only 4 less than the 30 police-involved killings that have occurred in Washington, D.C. San Francisco, CA makes up 0.25% and Washington, D.C makes up 0.29% of the total number of police-involved killings in the United States. Specifically, for the yearly trend of police-involved killings from 2015 to 2024, both San Francisco, CA and Washington, D.C have relatively decreased and then increased over time, still having fewer police-involved killings in 2024 than in 2015. In the past three years, both cities have had the same number of police-involved killings: 3 in 2022, 4 in 2023, and 2 in 2024.
 
-### Analysis: 
-
-### Visual:
-```{r}
-
+```{r echo=FALSE}
+ggplot(data = sum.city.year %>% 
+         filter(statecity %in% c("DC-Washington", "CA-San Francisco")) %>%
+         mutate(year = as.numeric(as.character(year))), 
+       aes(x = year, y = count, fill = statecity, color = statecity)) +
+  geom_bar(stat = "identity", position = "identity", 
+           alpha = 0.5, linewidth = 0.5) +
+  scale_fill_manual(values = c("DC-Washington" = "lightblue", 
+                               "CA-San Francisco" = "pink")) +
+  scale_color_manual(values = c("DC-Washington" = "darkblue", 
+                                "CA-San Francisco" = "red")) +
+  scale_x_continuous(breaks = 2015:2024) +
+  scale_y_continuous(breaks = seq(0, max(sum.city.year$count), by = 1)) +
+  labs(title = "Number of Police-Involved Killings by Year in D.C. and San Francisco",
+       x = "Year",
+       y = "Count",
+       fill = "City",
+       color = "City") +
+  theme_minimal()
 ```
 
-## City 5
+## City 5: Atlanta, GA
+Atlanta, GA is similar to Washington, D.C. based on the attributes of the type of weapon the person was armed with and whether the person was experiencing a mental health crisis. Specifically, for the type of weapon the person was armed with, 56.41% of police-involved killings in Atlanta, GA had a person armed with a gun, which is only 0.26% less than the 56.67% of police-involved shootings in Washington, D.C. that had a person armed with a gun. Atlanta, GA had 22 people and Washington, D.C. had 17 people armed with a gun who were in a police-involved killing. Specifically, for whether the person was experiencing a mental health crisis, 15.38% of police-involved killings in Atlanta, GA had a person experiencing a mental health crisis which is only 1.29% less than the 16.67% of police-involved killings in Washington, DC that had a person experiencing a mental health crisis. Atlanta, GA had 6 people and Washington, D.C. had 5 people experiencing a mental health crisis who were in a police-involved killing.
 
-### Analysis: 
-
-### Visual:
-```{r}
-
+```{r echo=FALSE}
+ggplot(sum.city.armed.gun %>%
+         filter(pct >= 55.56, pct <= 57.14) %>%
+         mutate(highlight.atlanta = ifelse(statecity %in% c("GA-Atlanta", "DC-Washington"), "Highlighted", "Other")), 
+       aes(y = reorder(statecity, pct), x = pct, color = highlight.atlanta)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("Highlighted" = "red", "Other" = "steelblue"), guide = "none") +
+  scale_x_continuous(breaks = seq(55, 60, by = 1), limits = c(55, 58)) +  # Force x-axis from 55 to 60
+  labs(title = "Percent of People Armed with a Gun by City",
+       x = "Percent of People Armed with a Gun",
+       y = "City") +
+  theme_minimal()
 ```
