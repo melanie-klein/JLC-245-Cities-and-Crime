@@ -12,5 +12,4 @@ Dataset location: [Dataset Link](https://opendata.dc.gov/)
 
 ## Instructions
 See the full project instructions in the accompanying document:  
-- **[Google Doc](https://docs.google.com/document/d/1QxpVWv3-j3pZ3zR4B8_iBbFQCJMKtIqJLNxyiWvVq-A/edit?tab=t.0)**
-- or **[`Project1_Instructions.pdf`](Project1_Instructions.pdf)**
+**[`Project1_Instructions.pdf`](Project1_Instructions.pdf)**
