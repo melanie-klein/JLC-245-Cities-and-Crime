@@ -13,4 +13,4 @@ The [Big Cities Health Inventory Data Platform](https://bigcitieshealthdata.org/
 See the full project instructions in the accompanying document: [Project 5 Instructions](instructions/Project5_Instructions.pdf)
 
 ## OUTPUT
-To view the results, open the [PDF file](outputs/Project5.html) located in the `outputs/` folder.
+To view the results, open the [PDF file](outputs/Project5.pdf) located in the `outputs/` folder.
