@@ -1,0 +1,138 @@
+---
+title: "JLC 245 Final Project"
+author: "Melanie Klein"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r include=FALSE}
+library(cluster)
+library(tidyverse)
+library(ggpubr)
+library(ggrepel)
+```
+
+```{r include=FALSE}
+# list of cities from the projects, deduplicate, order doesn't matter yet
+
+data.rankings = data.frame("City" = c(
+  "Washington DC",
+  "San Bernardino CA",
+  "Sacramento CA",
+  "Baltimore MD",
+  "San Francisco CA",
+  "Atlanta GA",
+  "Phoenix AZ",
+  "Dallas TX",
+  "Philadelphia PA",
+  "Kansas City MO",
+  "Denver CO",
+  "Portland OR",
+  "Seattle WA",
+  "New York City NY",
+  "Los Angeles CA"
+))
+```
+
+```{r include=FALSE}
+# approximate where the city would have ranked. rank 1-5 for the project. should be quick
+# 0 is DC across the board
+# 1-5 came from initial projects, you have to rank them independent of each other
+# the extra cities, you approximate where they would have fallen
+# because approximates you can duplicate them
+# will be graded on making the rankings, don't need to explain how
+```
+
+```{r include=FALSE}
+# the max ranking would be 700
+
+data.rankings$project2 <- c(0,1,4, 2,3,5,30,10,15,15,20,10,15,20,30)
+```
+
+```{r include=FALSE}
+# if found a city or MSA, find the big city is was in
+# the max ranking would be 900
+
+data.rankings$project3 <- c(0,10,20,20,2,1,4,5,3,20,20,20,10,30,30)
+```
+
+```{r include=FALSE}
+# the max ranking would be 34
+
+data.rankings$project4 <- c(0,14,14,13,12,2,22,14,20,5,4,3,1,20,14)
+```
+
+```{r include=FALSE}
+# the max ranking would be 34
+
+data.rankings$project5 <- c(0,17,17,15,1,17,15,15,10,10,6,2,3,5,4)
+```
+
+```{r include=FALSE}
+# add row names
+
+row.names(data.rankings) <- data.rankings$City
+data.rankings <- data.rankings[2:5]
+```
+
+```{r include=FALSE}
+# calculate multidimensional scaling
+# abstract distance calculation of each of the 15 cities to eachother
+
+mds.city <- cmdscale(dist(data.rankings))
+```
+
+```{r include=FALSE}
+# EMPTY PLOT
+plot(mds.city[, 1], mds.city[, 2], 
+     type = "n", xlab = "MDS Dimension 1", 
+     ylab = "MDS Dimension 2")
+
+# ADD POINTS
+points(mds.city[, 1], mds.city[, 2], 
+       pch = 21, bg = "lightblue")
+text(mds.city[, 1], mds.city[, 2], 
+     labels = row.names(data.rankings), 
+     pos = 3, cex = 0.8)
+
+# CALCULATE K MEANS CLUSTERING
+clusters <- kmeans(mds.city, centers = 4)$cluster
+
+# ADD CLUSTERS TO THE PLOT
+points(mds.city[, 1], mds.city[, 2], pch = 21, bg = clusters, cex = 1.2)
+```
+
+```{r echo=FALSE}
+# UPDATE DATA TABLE
+mds.df <- as.data.frame(mds.city)
+mds.df$groups <- as.factor(clusters)
+mds.df$city <- row.names(data.rankings)  # Add species information
+```
+
+# Data
+```{r echo=FALSE}
+print(data.rankings)
+```
+
+# Analysis
+Atlanta, GA is the most similar city to Washington, D.C. It is in the same cluster and appears closest to Washington, D.C. in the visualization. When analyzing demographic data from the Census Bureau's American Community Survey, Atlanta ranks as the most similar city to Washington, D.C. When analyzing hate crime statistics using FBI data, Atlanta ranks the second most similar city to Washington, D.C.
+
+Baltimore, MD is somewhat similar to Washington, D.C. Although it is geographically very close, it belongs to a neighboring cluster in the visualization. When analyzing police-involved shootings from the Washington Post's Fatal Force Database, Baltimore ranked the second most similar city to Washington, D.C. However, when analyzing hate crime statistics using FBI data, Baltimore ranked 13th in similarity to Washington, D.C. out of 34 potential cities.
+
+Phoenix, AZ is not similar to Washington, D.C. It is geographically distant and located far away in a separate cluster of only two cities in the visualization. When analyzing hate crime statistics from FBI data, Phoenix ranked 22nd in similarity to Washington, D.C. out of 34 potential cities. Additionally, when analyzing demographic data from the Census Bureau's American Community Survey, Phoenix ranked the fourth most similar city to Washington, D.C. Furthermore, when analyzing mental health and substance abuse metrics from the Big Cities Health Inventory Data Platform, it is estimated that Phoenix ranked 15th in similarity to Washington, D.C. out of 34 potential cities.
+
+```{r echo=FALSE}
+# UPDATED PLOT WITH CLUSTERS
+ggscatter(mds.df, x = "V1", y = "V2",
+          color = "groups",
+          palette = "jco",
+          size = 3,
+          ellipse = TRUE,
+          ellipse.type = "convex",
+          title = "K-means Clustering of MDS Cities Data",
+          xlab = "MDS Dimension 1",
+          ylab = "MDS Dimension 2") +
+  geom_text_repel(aes(label = city), box.padding = 0.5)
+```
+
+
