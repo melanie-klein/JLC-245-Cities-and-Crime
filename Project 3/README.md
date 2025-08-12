@@ -11,3 +11,6 @@ The U.S. Census Bureau’s [American Community Survey Data](https://www.census.g
 
 ## INSTRUCTIONS
 See the full project instructions in the accompanying document: [Project 3 Instructions](instructions/Project3_Instructions.pdf)
+
+## OUTPUT
+To view the results, download and open the [HTML file](outputs/Project3.html) located in the `outputs/` folder using a web browser.
