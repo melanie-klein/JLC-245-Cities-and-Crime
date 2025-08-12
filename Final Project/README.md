@@ -15,3 +15,6 @@ Build a dataset from the findings from all prior projects:
 
 ## INSTRUCTIONS
 See the full project instructions in the accompanying document: [Final Project Instructions](instructions/FinalProject_Instructions.pdf)
+
+## OUTPUT
+To view the results, download and open the [HTML file](outputs/FinalProject.html) located in the `outputs/` folder using a web browser.
