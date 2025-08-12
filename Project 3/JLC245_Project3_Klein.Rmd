@@ -1,164 +1,442 @@
 ---
-title: "JLC245_Project3_Klein"
+title: "JLC245 Project 3"
 author: "Melanie Klein"
 date: "`r Sys.Date()`"
 output: html_document
 ---
 
-Step 0: Libraries
-```{r install, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
-# install.packages('tidyverse')
-# install.packages('tidycensus')
-# install.packages('ggrepel')
-```
-
 ```{r library, message=FALSE, warning=FALSE, include=FALSE}
+#Step 0: Libraries
 library(tidyverse)
 library(tidycensus)
+library(ggplot2)
 library(ggrepel)
 ```
 
-Step 1: Census API key
 ```{r install, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+#Step 1: Census API key
 census_api_key("edaa213942e0a762de9001c06c84d61434d3db46", install = TRUE, overwrite = TRUE)
 readRenviron("~/.Renviron")
 ```
 
-Step 2: Find variables
-```{r}
+```{r include=FALSE}
+#Step 2: Find variables
 # all the variables
 variables <- load_variables(2023, "acs5", cache = TRUE)
 # just the totals
 variables.totals <- subset(variables, variables$label == 'Estimate!!Total:')
 ```
 
-Step 3: Write queries
-```{r}
+```{r include=FALSE}
+#Step 3: Write queries
 # run a query for 2023 total population by state, like this:
-pop.msa.23 <- get_acs(geography = "state",
+pop.state.23 <- get_acs(geography = "state",
                  variables = "B01003_001",
                  year = 2023)
 
-pop.msa.22 <- get_acs(geography = "state",
+# run a query for 2022 total population by state, like this:
+pop.state.22 <- get_acs(geography = "state",
                  variables = "B01003_001",
                  year = 2022)
 ```
 
-```{r}
+```{r include=FALSE}
+#Total Population
 # run a query for 2023 total population by metropolitan statistical area, like this:
 pop.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
                  variables = "B01003_001",
                  year = 2023)
-# compare to DC
+
+# compare to DC, calculate the difference from DC population
 pop.msa.23$diff <- abs(pop.msa.23$estimate - pop.msa.23$estimate[893])
+
 # to make this table easier to work with
 population <- subset(pop.msa.23, pop.msa.23$diff < 4000000)
 ```
-```{r}
+
+```{r include=FALSE}
+# Race
 # run a query for 2023 population by race by MSA, like this:
-msa.race <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+race.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
                     variables = c("B02008_001", "B02009_001", "B02010_001", "B02011_001"),
                     year = 2023)
+
 # replace with codes with text
-msa.race$variable <- gsub("B02008_001", "White", msa.race$variable)
-msa.race$variable <- gsub("B02009_001", "Black", msa.race$variable)
-msa.race$variable <- gsub("B02010_001", "American Indian", msa.race$variable)
-msa.race$variable <- gsub("B02011_001", "Asian", msa.race$variable)
+race.msa.23$variable <- gsub("B02008_001", "White", race.msa.23$variable)
+race.msa.23$variable <- gsub("B02009_001", "Black", race.msa.23$variable)
+race.msa.23$variable <- gsub("B02010_001", "American Indian", race.msa.23$variable)
+race.msa.23$variable <- gsub("B02011_001", "Asian", race.msa.23$variable)
+
 # join population and race tables
-msa.race.total <- msa.race %>%
+race.msa.23.total <- race.msa.23 %>%
   left_join(pop.msa.23, by = "GEOID")
+
 # clean up the columns
-msa.race.total <- msa.race.total[c(1:4,8,10)]
+race.msa.23.total <- race.msa.23.total[c(1:4,8,10)]
+
 # clean up the column names
-names(msa.race.total) <- c("GEOID", "Name", "Race", "Race.Count",
+names(race.msa.23.total) <- c("GEOID", "Name", "Race", "Race.Count",
                            "Population", "Pop.Diff")
+
 # calculate race percentages
-msa.race.total$race.PCT <- round(msa.race.total$Race.Count/msa.race.total$Population*100,2)
+race.msa.23.total$race.PCT <- round(race.msa.23.total$Race.Count/race.msa.23.total$Population*100,2)
 ```
 
-```{r}
-# run a query for 2023 ‘component’ data sets by MSA, like this:
-msa_components <- get_estimates(geography = "metropolitan statistical area/micropolitan statistical area", product = "components")
+```{r include=FALSE}
+# Black
+race.msa.23.total.black <- race.msa.23.total %>%
+  filter(Race == "Black")
+
+race.msa.23.total.black$diff.PCT <- abs(race.msa.23.total.black$race.PCT - race.msa.23.total.black$race.PCT[893])
 ```
 
-```{r}
-dc_flows <- get_flows(
-  geography = "metropolitan statistical area",
-  msa = 47900, # can adjust this to different areas
-  year = 2020,
-  geometry = TRUE)
+```{r include=FALSE}
+# White
+race.msa.23.total.white <- race.msa.23.total %>%
+  filter(Race == "White")
 
-dc.philly.atlanta <- get_flows(
-  geography = "metropolitan statistical area",
-  msa = c(47900,37980,12060),
-  year = 2020,
-  geometry = TRUE)
-
-all.flows <- get_flows(
-  geography = "metropolitan statistical area",
-  year = 2020,
-  geometry = TRUE)
+race.msa.23.total.white$diff.PCT <- abs(race.msa.23.total.white$race.PCT - race.msa.23.total.white$race.PCT[893])
 ```
 
-DC is row 893
+```{r include=FALSE}
+# Asian
+race.msa.23.total.asian <- race.msa.23.total %>%
+  filter(Race == "Asian")
 
-total poopulation (2023)
-Population by race (2023)
-migration flows (2020)
-income = B19019_001 median household
-education = C15010_001 # of bachelors
-poverty = B17026_001
-sex/gender
-internet usage
-travel time to work -dont want total bc equal to population, need subcategory
+race.msa.23.total.asian$diff.PCT <- abs(race.msa.23.total.asian$race.PCT - race.msa.23.total.asian$race.PCT[893])
+```
+
+```{r include=FALSE}
+# Median Household Income in the Past 12 Months (in 2023 Inflation-Adjusted Dollars) by Household Size
+income.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+                 variables = "B19019_001",
+                 year = 2023)
+
+income.msa.23$diff <- abs(income.msa.23$estimate - income.msa.23$estimate[893])
+```
+
+```{r include=FALSE}
+# Field of Bachelor's Degree for First Major for the Population 25 Years and Over of people ages 25+
+education.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+                 variables = "C15010_001",
+                 year = 2023)
+
+# calculate count difference to DC
+education.msa.23$diff <- abs(education.msa.23$estimate - education.msa.23$estimate[893])
+
+# join population to table
+education.msa.23.total <- education.msa.23 %>%
+  left_join(pop.msa.23, by = "GEOID")
+
+# clean up the columns
+education.msa.23.total <- education.msa.23.total[c(2:4,6,9)]
+
+# clean up the column names
+names(education.msa.23.total) <- c("Name", "Education", "Education.Count", "diff.count", "Population")
+
+# calculate percentages
+education.msa.23.total$education.pct <- round(education.msa.23.total$Education.Count/education.msa.23.total$Population*100,2)
+
+# calculate difference to DC
+education.msa.23.total$diff.pct <- abs(education.msa.23.total$education.pct - education.msa.23.total$education.pct[893])
+```
+
+```{r include=FALSE}
+# Ratio of Income to Poverty Level of Families in the Past 12 Months
+# Estimate!!Total:!!Under .50
+poverty.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+                 variables = "B17026_002",
+                 year = 2023)
+
+poverty.msa.23$diff <- abs(poverty.msa.23$estimate - poverty.msa.23$estimate[893])
+```
+```{r include=FALSE}
+# Population Under 18 Years by Age
+youth.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+                 variables = "B09001_001",
+                 year = 2023)
+
+youth.msa.23$diff <- abs(youth.msa.23$estimate - youth.msa.23$estimate[893])
+
+# calculate count difference to DC
+youth.msa.23$diff <- abs(youth.msa.23$estimate - youth.msa.23$estimate[893])
+
+# join population to table
+youth.msa.23.total <- youth.msa.23 %>%
+  left_join(pop.msa.23, by = "GEOID")
+
+# clean up the columns
+youth.msa.23.total <- youth.msa.23.total[c(2:4,6,9)]
+
+# clean up the column names
+names(youth.msa.23.total) <- c("Name", "Youth", "Youth.Count", "diff.count", "Population")
+
+# calculate percentages
+youth.msa.23.total$youth.pct <- round(youth.msa.23.total$Youth.Count/youth.msa.23.total$Population*100,2)
+
+# calculate difference to DC
+youth.msa.23.total$diff.pct <- abs(youth.msa.23.total$youth.pct - youth.msa.23.total$youth.pct[893])
+```
+
+```{r include=FALSE}
+# Number of Earners in Family
+# Estimate!!Total:!!1 earners
+earners.1.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+                 variables = "B19122_003",
+                 year = 2023)
+
+earners.1.msa.23$diff <- abs(earners.1.msa.23$estimate - earners.1.msa.23$estimate[893])
+```
+
+```{r include=FALSE}
+# Number of Earners in Family
+# Estimate!!Total:!!2 earners
+earners.2.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+                 variables = "B19122_004",
+                 year = 2023)
+
+earners.2.msa.23$diff <- abs(earners.2.msa.23$estimate - earners.2.msa.23$estimate[893])
+```
+
+
+```{r include=FALSE}
+# Travel time to work
+# Estimate!!Total:!!Less than 5 minutes
+travel.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+                 variables = "B08303_002",
+                 year = 2023)
+
+travel.msa.23$diff <- abs(travel.msa.23$estimate - travel.msa.23$estimate[893])
+```
+
+
+```{r include=FALSE}
+# Computers in Household
+# Estimate!!Total:!!No Computer
+computer.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+                 variables = "B28010_007",
+                 year = 2023)
+
+computer.msa.23$diff <- abs(computer.msa.23$estimate - computer.msa.23$estimate[893])
+```
+
+```{r include=FALSE}
+# Monthly Housing Cost
+# Estimate!!Total:!!$3,000 or more
+housing.msa.23 <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
+                 variables = "B25104_016",
+                 year = 2023)
+
+housing.msa.23$diff <- abs(housing.msa.23$estimate - housing.msa.23$estimate[893])
+```
 
 # Data
+The American Community Survey (ACS), conducted by the U.S. Census Bureau, collects detailed information on social, economic, housing, and demographic characteristics across a wide range of geographic areas. The 2023 5-year ACS includes data collected from 2019 to 2023, covering 28,261 variables across 935 metropolitan statistical areas (MSAs). Unlike the decennial census, which captures a snapshot every ten years, the ACS is conducted continuously, providing updated estimates annually. 
 
 # Methods
+The U.S. Census Bureau’s API was used to retrieve data from the 2023 5-year ACS, focusing on all MSAs. Data was accessed and processed to create a reference table cataloging all variables and their definitions, as well as totals for variables. Queries were written for the following variables of interest: total population, median household income, number of bachelor’s degrees, number of people below the poverty line, total population under age 18, number of families with one earner, number of families with two earners, average travel time to work, number of households without a computer, and monthly cost of housing. For each selected variable, MSAs were ranked based on their difference from the Washington, D.C. MSA, and the top ten were identified. MSAs appearing in the top ten across multiple variables were highlighted to reveal similarities to Washington, D.C.
+
+```{r include=FALSE}
+#Provide a brief paragraph (3-4 sentences) on the research methods leveraged to answer this question. This includes the software, calculations, skills, techniques, and unique workflows used to analyze your data and develop an answer. You do NOT need to describe click-by-click instructions or lines of code describing how you did things; you DO need to describe a logical process that is specific enough that a reader could replicate.
+```
 
 # Analysis
+```{r include=FALSE}
+#Using the data specific to this project, identify five cities similar to Washington, D.C. (2pts each)
+#Provide justification of similarity for each city (4-5 sentences each) 
+#Each justification should include at least two specific reasons for similarity
+#Each reason should include a relevant statistical reference 
 
-## City 1
-
-### Analysis: 
-
-### Visual:
-```{r}
-
+#Two “datasets” per similar city
+#Don’t use two attributes or fields from the same dataset for one city (i.e. race or sex). Use completely different datasets.
+#This is ten total datasets, unless you use a different attribute from the same dataset for different cities
 ```
 
-## City 2
+## City 1: San Francisco, CA
+San Francisco is the major city within the San Francisco-Oakland-Fremont, CA Metro Area.
 
-### Analysis: 
+San Francisco, CA is similar to Washington, D.C. based on the median household income and the number of people with monthly housing costs greater than $3,000.
 
-### Visual:
-```{r}
+Specifically, the median household income in San Francisco is $133,780—only $9,884 higher than the $123,896 median in Washington, D.C. Among all MSAs, San Francisco's median household income is the fourth closest to that of Washington, D.C.
 
+Regarding housing costs, 712,499 people in San Francisco pay more than $3,000 per month—just 126,139 more than the 586,360 people who do so in Washington, D.C. San Francisco has the second closest number of people in this category among all MSAs compared to Washington, D.C.
+
+```{r echo=FALSE}
+# Vector of selected cities
+selected_cities <- c(
+  "Washington-Arlington-Alexandria, DC-VA-MD-WV Metro Area",
+  "Lexington Park, MD Metro Area",
+  "Heber, UT Micro Area",
+  "Nantucket, MA Micro Area",
+  "San Francisco-Oakland-Fremont, CA Metro Area",
+  "Seattle-Tacoma-Bellevue, WA Metro Area",
+  "Boston-Cambridge-Newton, MA-NH Metro Area",
+  "Bridgeport-Stamford-Danbury, CT Metro Area",
+  "Santa Cruz-Watsonville, CA Metro Area",
+  "Napa, CA Metro Area",
+  "Oxnard-Thousand Oaks-Ventura, CA Metro Area",
+  "Chicago-Naperville-Elgin, IL-IN Metro Area",
+  "San Diego-Chula Vista-Carlsbad, CA Metro Area",
+  "Dallas-Fort Worth-Arlington, TX Metro Area",
+  "San Jose-Sunnyvale-Santa Clara, CA Metro Area",
+  "Miami-Fort Lauderdale-West Palm Beach, FL Metro Area",
+  "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD Metro Area",
+  "Houston-Pasadena-The Woodlands, TX Metro Area"
+)
+
+# Filter datasets
+housing_filtered <- housing.msa.23[housing.msa.23$NAME %in% selected_cities, ]
+income_filtered <- income.msa.23[income.msa.23$NAME %in% selected_cities, ]
+
+# Merge datasets by NAME
+merged_df <- merge(housing_filtered[, c("NAME", "estimate")],
+                   income_filtered[, c("NAME", "estimate")],
+                   by = "NAME",
+                   suffixes = c("_housing", "_income"))
+
+# Create simplified city labels
+merged_df$label <- sub("[-,].*", "", merged_df$NAME)  # keep only part before dash or comma
+
+# Add a color group column
+merged_df$color_group <- ifelse(
+  merged_df$NAME %in% c(
+    "Washington-Arlington-Alexandria, DC-VA-MD-WV Metro Area",
+    "San Francisco-Oakland-Fremont, CA Metro Area"
+  ),
+  "Washington/SF",
+  "Other"
+)
+
+# Plot with conditional coloring
+ggplot(merged_df, aes(x = estimate_housing, y = estimate_income)) +
+  geom_point(aes(color = color_group), size = 3) +
+  geom_text_repel(aes(label = label), size = 3, max.overlaps = 20) +
+  scale_color_manual(values = c("Washington/SF" = "red", "Other" = "steelblue")) +
+  labs(
+    title = "MSAs Similar to D.C. by Housing Cost and Median Household Income",
+    x = "Number of People with Monthly Housing Costs > $3,000",
+    y = "Median Household Income",
+    color = "MSA Category"
+  ) +
+  theme_minimal() +
+  guides(color = "none")
 ```
 
-## City 3
+## City 2: Philadelphia, PA
+Philadelphia is the major city within the Philadelphia-Camden-Wilmington, PA-NJ-DE-MD Metro Area.
 
-### Analysis: 
+Philadelphia, PA is similar to Washington, D.C. based on the total population and the number of families with one earner.
 
-### Visual:
-```{r}
+Specifically, the total population of Philadelphia is 6,241,882—only 21,914 fewer people than the 6,263,796 residents of Washington, D.C. Among all MSAs, Philadelphia's population is the closest to that of Washington, D.C.
 
+In terms of families with one earner, 470,592 families in Philadelphia fall into this category—just 53,626 more than the 416,966 families with one earner in Washington, D.C. Philadelphia has the second closest number of such families compared to Washington, D.C. among all MSAs.
+
+```{r echo=FALSE}
+pop.msa.23 %>%
+  filter(diff <= 1896176) %>%
+  mutate(
+    NAME = sub("\\s*-.*", "", NAME),  # Remove everything after the dash
+    highlight.philadelphia = ifelse(NAME %in% c("Philadelphia", "Washington"), "Highlighted", "Other")
+  ) %>%
+  ggplot(aes(y = reorder(NAME, -diff), x = estimate, fill = highlight.philadelphia)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("Highlighted" = "red", "Other" = "steelblue"), guide = "none") +
+  scale_x_continuous(breaks = seq(0, 200000, by = 10000)) +
+  labs(title = "Population in the U.S. by City",
+       x = "Population",
+       y = "City") +
+  theme_minimal()
 ```
 
-## City 4
+## City 3: Dallas, TX
+Dallas is the major city within the Dallas-Fort Worth-Arlington, TX Metro Area.
 
-### Analysis: 
+Dallas, TX is similar to Washington, D.C. based on the number of people over age 25 with a Bachelor's Degree and the number of families with two earners.
 
-### Visual:
-```{r}
+Specifically, 1,968,490 people over age 25 in Dallas hold a Bachelor's degree—only 346,199 fewer than the 2,314,689 in Washington, D.C. This represents 25.21% of Dallas's population, compared to 36.95% in Washington, D.C.
 
+Regarding the number of families with two earners, 871,814 families in Dallas have two earners—just 150,865 more than the 720,949 families in Washington, D.C. Among all MSAs, Dallas has the fifth closest number of families in this category compared to Washington, D.C.
+
+```{r echo=FALSE}
+# Filter the top ten cities with the smallest difference in degrees compared to D.C.
+top_10_cities <- education.msa.23[order(education.msa.23$diff),][1:10, ]
+
+# Create simplified city labels
+top_10_cities$label <- sub("[-,].*", "", top_10_cities$NAME)  # Keep only part before dash or comma
+
+# Assign color based on city: Red for Washington and Dallas, Blue for others
+top_10_cities$color <- ifelse(top_10_cities$label %in% c("Washington", "Dallas"), "red", "steelblue")
+
+# Plotting: Number of Bachelor's Degrees vs Difference from D.C. with custom colors
+ggplot(top_10_cities, aes(x = estimate, y = diff, label = label)) +
+  geom_point(aes(color = color), size = 3) +  # Use the custom color
+  geom_text_repel(aes(label = label), size = 3, max.overlaps = 20) +  # Adding labels for cities
+  labs(
+    title = "Top 10 Cities Most Similar to D.C. by Number of Bachelor's Degrees",
+    x = "Number of Bachelor's Degrees",
+    y = "Difference in Bachelor's Degrees Compared to D.C."
+  ) +
+  scale_color_identity() +  # Use exact colors (red and blue)
+  theme_minimal()
 ```
 
-## City 5
+## City 4: Phoenix, AZ
+Phoenix is the major city within the Phoenix-Mesa-Chandler, AZ Metro Area.
 
-### Analysis: 
+Phoenix, AZ is similar to Washington, D.C. based on the number of families whose income is less than 50 percent of the poverty level and the number of households without a computer.
 
-### Visual:
-```{r}
+Specifically, 44,618 families in Phoenix fall below 50 percent of the poverty level—only 5,231 more than the 39,387 families in Washington, D.C. Among all MSAs, Phoenix has the second closest number of families in this category compared to Washington, D.C.
 
+Regarding households without a computer, 58,664 in Phoenix lack one—just 790 fewer than the 59,454 households in Washington, D.C. Among all MSAs, Phoenix has the closest number of households without a computer compared to Washington, D.C.
+
+```{r echo=FALSE}
+poverty.msa.23 %>%
+  filter(diff <= 15255) %>%
+  mutate(
+    NAME = sub("\\s*-.*", "", NAME),  # Remove everything after a dash, including any leading spaces
+    highlight.phoenix = ifelse(NAME %in% c("Phoenix", "Washington"), "Highlighted", "Other")
+  ) %>%
+  ggplot(aes(y = reorder(NAME, -diff), x = estimate, color = highlight.phoenix)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("Highlighted" = "red", "Other" = "steelblue"), guide = "none") +
+  labs(title = "Families Below 50% of the Poverty Level by City",
+       x = "Number of Families Below 50% of the Poverty Level",
+       y = "City") +
+  theme_minimal()
+```
+
+## City 5: Atlanta, GA
+Atlanta is the major city within the Atlanta-Sandy Springs-Roswell, GA Metro Area.
+
+Atlanta, GA is similar to Washington, D.C. based on the population under age 18 and the number of people whose travel time to work is less than five minutes.
+
+Specifically, 1,473,173 people in Atlanta are under age 18—only 40,306 more than the 1,432,867 in Washington, D.C. This represents 23.85% of Atlanta's population, compared to 22.88% in Washington, D.C. Among all MSAs, Atlanta has the closest number of youth compared to Washington, D.C.
+
+Regarding travel time to work, 41,782 people in Atlanta commute in less than five minutes—just 4,095 more than the 37,687 people in Washington, D.C. Among all MSAs, Atlanta has the fourth closest number of people with this commute time compared to Washington, D.C.
+
+```{r echo=FALSE}
+# Filter for the top 15 cities with the smallest difference in "diff.pct"
+top_15_cities_youth <- youth.msa.23.total[order(youth.msa.23.total$diff.count),][1:10, ]
+
+# Shorten the city names to just the part before the dash
+top_15_cities_youth$short_name <- sub("-.*", "", top_15_cities_youth$Name)
+
+# Add a new column for the color based on the shortened city names
+top_15_cities_youth$color <- ifelse(top_15_cities_youth$short_name %in% 
+                                      c("Washington", "Atlanta"), 
+                                      "red", "steelblue")
+
+# Plot with points, Washington and Atlanta in red, and the rest in blue
+ggplot(top_15_cities_youth, aes(x = youth.pct, y = reorder(short_name, -diff.count), color = color)) + 
+  geom_point(size = 4) +  # Use points and colors based on the new 'color' column
+  labs(
+      title = "Youth Percentage of Total Population for Top 10 Cities Similar to D.C.",
+      x = "Percentage of Total Population Under 18 (Youth Percentage)", 
+      y = "City (Ranked by Similarity in Youth Population to D.C.)"
+  ) +
+  geom_text_repel(aes(label = scales::comma(youth.pct)),
+                  color = "black", size = 3, box.padding = 0.5, max.overlaps = 10, 
+                  point.padding = 0.5, direction = "both") +  # Adjust text labels with repel settings
+  scale_color_identity() +  # Use the color values directly
+  theme_minimal()
 ```
