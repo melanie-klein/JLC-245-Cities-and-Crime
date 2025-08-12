@@ -16,10 +16,10 @@ Upon completion of this course students should have a practical comprehension of
 ## Projects
 - [Project 1: D.C. Crime](Project%201)
 - [Project 2: Gun Violence](Project%202)
-- [Project 3:](Project%203)
-- [Project 4:](Project%204)
-- [Project 5:](Project%205)
-- [Final Project:](Final%20Project) 
+- [Project 3: Demographics](Project%203)
+- [Project 4: Hate Crimes](Project%204)
+- [Project 5: Drugs](Project%205)
+- [Final Project](Final%20Project) 
 
 ## Tools
 - RStudio
