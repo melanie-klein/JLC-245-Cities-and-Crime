@@ -8,8 +8,8 @@ Identify crime trends in Washington, DC over behavior, space, and time.
 
 ## DATA
 This project uses real live Washington, D.C. crime data.
-Dataset location: [Dataset Link](https://opendata.dc.gov/)
+Dataset location: [Open Data DC](https://opendata.dc.gov/)
 
 ## Instructions
 See the full project instructions in the accompanying document:  
-**[`Project1_Instructions.pdf`](Project1_Instructions.pdf)**
+**[Project 1 Instructions](instructions/Project1_Instructions.pdf)**
