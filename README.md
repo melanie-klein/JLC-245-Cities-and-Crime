@@ -21,3 +21,10 @@ Upon completion of this course students should have a practical comprehension of
 - [Project 4: Hate Crimes](Project%204)
 - [Project 5: Drugs](Project%205)
 - [Final Project](Final%20Project)
+
+Each project folder is organized into the following (where applicable):
+- `README.md` — Project overview  
+- `instructions/` — Project instructions in PDF format  
+- `data/` — Dataset(s) used for analysis  
+- `src/` — Source code files (e.g., R Markdown, scripts)  
+- `outputs/` — Generated output files (e.g., HTML, PDF reports)
