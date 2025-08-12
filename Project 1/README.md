@@ -11,5 +11,4 @@ This project uses real live Washington, D.C. crime data.
 Dataset location: [Open Data DC](https://opendata.dc.gov/)
 
 ## Instructions
-See the full project instructions in the accompanying document:  
-**[Project 1 Instructions](instructions/Project1_Instructions.pdf)**
+See the full project instructions in the accompanying document: [Project 1 Instructions](instructions/Project1_Instructions.pdf)
