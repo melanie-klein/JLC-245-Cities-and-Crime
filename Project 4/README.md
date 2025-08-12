@@ -11,3 +11,6 @@ The Federal Bureau of Investigation's [Crime Data Explorer](https://cde.ucr.cjis
 
 ## INSTRUCTIONS
 See the full project instructions in the accompanying document: [Project 4 Instructions](instructions/Project4_Instructions.pdf)
+
+## OUTPUT
+To view the results, download and open the [HTML file](outputs/Project4.html) located in the `outputs/` folder using a web browser.
