@@ -1,4 +1,4 @@
-# JLC 245-001: Cities & Crime
+# JLC-245: Cities & Crime
 **School**: American University, School of Public Affairs, Department of Justice, Law & Criminology  
 **Semester**: Spring 2025  
 **Instructor**: [Dr. Matthew D’Anna](https://www.american.edu/spa/faculty/danna.cfm)  
