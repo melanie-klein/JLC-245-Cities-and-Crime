@@ -1,8 +1,8 @@
 # JLC 245-001: Cities & Crime
-American University, School of Public Affairs, Department of Justice, Law & Criminology  
-Semester: Spring 2025  
-Instructor: [Dr. Matthew D’Anna](https://www.american.edu/spa/faculty/danna.cfm)  
-Tools: RStudio  
+**School**: American University, School of Public Affairs, Department of Justice, Law & Criminology  
+**Semester**: Spring 2025  
+**Instructor**: [Dr. Matthew D’Anna](https://www.american.edu/spa/faculty/danna.cfm)  
+**Tools**: RStudio  
 
 ## Course Description
 Urban areas face many significant challenges, of which crime is one of the most significant. Crime-plagued areas do not occur in a vacuum. This course explores the factors correlated with crime with a focus on the modern American city, particularly Washington, D.C. The course frames the issues using historical and theoretical perspectives to provide context for social scientific studies and policy work in this area. Students gain an appreciation for the complexity of addressing crime in urban areas as well as a solid foundation for advanced course work in criminology, sociology, and urban studies. 
