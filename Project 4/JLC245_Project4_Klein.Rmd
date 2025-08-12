@@ -48,11 +48,27 @@ hate.dc <- subset(hate, hate$state_abbr == 'DC')
 # US
 explore(hate)
 ```
-- 80% offenders are white (40%) or unknown (40%)
-- #1 location type of bar or nightclub (more than 50%)
-- overwhelmingly occur at businesses
+- 80% offenders are white (40%) or unknown (40%)*
+- #1 location name of bar or nightclub (more than 50%)
+- victim types overwhelmingly are businesses*
 - most of the time it's a single offense
 - most of the time it's a single bias
+
+- events per year, may want to consider
+- adult victim count generally 1, juvenile generally 0, not very exciting
+- ethnicity mostly not known, not very exciting
+- offense name very messy, might be something
+- bias description, may want to consider
+- multiple offense and bias, not very exciting
+
+Interesting fields, turn them into rankings to build the table
+- events per year
+- offender race
+- offense name
+- location name
+- bias
+- victim types
+Don't account for all measures, but pull things that are uniquely DC and different from the norm
 
 ```{r}
 # DC
@@ -63,6 +79,14 @@ explore(hate.dc)
 - location name very different, highway/road/alley/street/sidewalk more than 60% compared to nightclubs
 - victim type very different, almost 90% individual instead of business
 - offense and bias are in line with national
+
+Interesting
+- events per year, national is flat line, DC goes up
+- offender race, 40% white US, 53% black in DC, completely different, look at black
+- offense name, assault was the most national, DC it is intimidation almost 30%, also have destruction/damage/vandalism and aggravated assault as the other two that stand out, focus on intimidation because it is the highest
+- location name, highway
+- bias, antigay male
+- victim types, individuals
 
 Step 4: Filter data
 ```{r}
@@ -93,82 +117,333 @@ hate.events.sum <- hate.similar %>%
   summarise(count = n()) %>% 
   mutate(pct = round(count/sum(count)*100, 2))
 
-hate.events.sum$diff <- hate.events.sum$
-  
-  
-This code generate a summary table using Step 4, grouped by name, count number of events, and adding a percentage - for percentage of all events
-Add a ‘diff’ column to calculate the difference in number of events for each area relative to D.C.
-sum.events$diff <- sum.events$count - sum.events$count[zz] # replace zz with the row number for D.C.
-Now convert that difference to an absolute value
-sum.events$abs.diff <- abs(sum.events$diff)
-Create a new table that reorders your summary table in ascending order of absolute difference
-events <- sum.events[order(sum.events$abs.diff),]
-Add a new field for ranking each area, relative to D.C.
-events$rank <- seq.int(nrow(events)) - 1
-“-1” is so D.C. becomes rank 0 instead of 1
+hate.events.sum$diff <- abs(hate.events.sum$count - hate.events.sum$count[34])
 
-# hate.events.sum$diff <- hate.events.sum$count - hate.events.sum$count[34]
-# hate.events.sum$abs.diff <- abs(hate.events.sum$diff)
-# events <- hate.events.sum[order(hate.events.sum$abs.diff),]
-
+events <- hate.events.sum[order(hate.events.sum$diff),]
+events$rank.events <- seq.int(nrow(events)) - 1
 ```
 
-
-
-# Data
-The FBI's Hate Crime Statistics dataset spans from 1991 to 2023 and includes a total of 253,776 events reported at the incident level. It provides annual statistics on hate crimes, detailing offenses, victims, and offenders motivated by bias related to race, gender, gender identity, religion, disability, sexual orientation, or ethnicity. The data is collected from law enforcement agencies through both the Summary Reporting System (SRS) and National Incident-Based Reporting System (NIBRS) forms, contributing to the UCR Program. The dataset includes hate crime incidents reported across the United States, with data collected from law enforcement agencies at the................. (local, state, and federal) levels.
-
-
-# Methods
-
-# Analysis
-
-## City 1
-
-### Analysis: 
-
-### Visual:
 ```{r}
+# offender race
 
+#create summary table
+hate.offender.race <- hate.similar %>%
+  group_by(pug_agency_name, offender_race) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# filter by the field most unique to DC
+offender.race <- subset(hate.offender.race,
+                        hate.offender.race$offender_race == "Black or African American")
+
+# calculate the difference between DC and the other cities
+offender.race$diff <- abs(offender.race$pct - offender.race$pct[33])
+
+# reorder the table
+offender.race <- offender.race[order(offender.race$diff),]
+
+# rank the table
+offender.race$rank.race <- seq.int(nrow(offender.race)) - 1
 ```
 
-## City 2
-
-### Analysis: 
-
-### Visual:
 ```{r}
+# offense type
 
+#create summary table
+hate.offense <- hate.similar %>%
+  group_by(pug_agency_name, offense_name) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# filter by the field most unique to DC
+offense <- subset(hate.offense,
+                        hate.offense$offense_name == "Simple Assault")
+
+# calculate the difference between DC and the other cities
+offense$diff <- abs(offense$pct - offense$pct[34])
+
+# reorder the table
+offense <- offense[order(offense$diff),]
+
+# rank the table
+offense$rank.offense <- seq.int(nrow(offense)) - 1
 ```
 
-## City 3
-
-### Analysis: 
-
-### Visual:
 ```{r}
+# location name
 
+#create summary table
+hate.location <- hate.similar %>%
+  group_by(pug_agency_name, location_name) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# filter by the field most unique to DC
+location <- subset(hate.location,
+                        hate.location$location_name == "Highway/Road/Alley/Street/Sidewalk")
+
+# calculate the difference between DC and the other cities
+location$diff <- abs(location$pct - location$pct[34])
+
+# reorder the table
+location <- location[order(location$diff),]
+
+# rank the table
+location$rank.location <- seq.int(nrow(location)) - 1
 ```
-
-## City 4
-
-### Analysis: 
-
-### Visual:
 ```{r}
+# bias
 
+#create summary table
+hate.bias <- hate.similar %>%
+  group_by(pug_agency_name, bias_desc) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# filter by the field most unique to DC
+bias <- subset(hate.bias,
+                        hate.bias$bias_desc == "Anti-Gay (Male)")
+
+# calculate the difference between DC and the other cities
+bias$diff <- abs(bias$pct - bias$pct[32])
+
+# reorder the table
+bias <- bias[order(bias$diff),]
+
+# rank the table
+bias$rank.bias <- seq.int(nrow(bias)) - 1
 ```
 
-## City 5
-
-### Analysis: 
-
-### Visual:
 ```{r}
+# victim types
 
+#create summary table
+hate.victim <- hate.similar %>%
+  group_by(pug_agency_name, victim_types) %>%
+  summarise(count = n()) %>%
+  mutate(pct = round(count/sum(count)*100,2))
+
+# filter by the field most unique to DC
+victim <- subset(hate.victim,
+                        hate.victim$victim_types == "Individual")
+
+# calculate the difference between DC and the other cities
+victim$diff <- abs(victim$pct - victim$pct[34])
+
+# reorder the table
+victim <- victim[order(victim$diff),]
+
+# rank the table
+victim$rank.victim <- seq.int(nrow(victim)) - 1
 ```
+
+```{r}
+# combine the 6 tables: events, offender.race, offense, location, boas, victim
+names(events) <- c("City", "Count.Events", "PCT.Events", "Diff.Events", "Rank.Events")
+names(offender.race) <- c("City", "Race", "Count.Race", "PCT.Race", "Diff.Race", "Rank.Race")
+names(offense) <- c("City", "Offense", "Count.Offense", "PCT.Offense", "Diff.Offense", "Rank.Offense")
+names(location) <- c("City", "Location", "Count.Location", "PCT.Location", "Diff.Location", "Rank.Location")
+names(bias) <- c("City", "Bias", "Count.Bias", "PCT.Bias", "Diff.Bias", "Rank.Bias")
+names(victim) <- c("City", "Victim", "Count.Victim", "PCT.Victim", "Diff.Victim", "Rank.Victim")
+```
+
+```{r}
+# joins
+hate.ranks <- events %>%
+  left_join(offender.race, by = "City")
+hate.ranks <- hate.ranks %>%
+  left_join(offense, by = "City")
+hate.ranks <- hate.ranks %>%
+  left_join(location, by = "City")
+hate.ranks <- hate.ranks %>%
+  left_join(bias, by = "City")
+hate.ranks <- hate.ranks %>%
+  left_join(victim, by = "City")
+```
+
+```{r}
+# fix column order
+ranks <- hate.ranks[c(1, 5, 10, 15, 20, 25, 30)]
+```
+
+can create the threshold for similar
+ranking will put you in the ballpark but isn't enough
+could calculate an average ranking
+
+Top 6 for each of six variables, not scientific but arbitrary
+Seattle** 1 4 6 = 11
+Portland** 3 3 6 = 12
+Denver** 3 4 5 = 12
+Atlanta** 2 4 5 = 11
+Kansas City** 2 4 6 = 12
+
+Columbus** 2 5 6 = 13
+Detroit** 3 4 6 = 13
+
+San Jose
+Memphis
+Milwaukee*
+Albuquerque
+Honolulu
+Austin
+Baltimore
+San Francisco*
+New Orleans
+Louisville
+Sacramento
+Fort Worth
+Tuscon
 
 5 cities
 - counties, agencies/jurisdictions
 3 variables per similar city
 - don't need 15 unique variables, can use as few as 3 but likely in the middle
+
+
+# Data
+The FBI's Hate Crime Statistics dataset spans from 1991 to 2023 and includes a total of 253,776 events reported at the incident level. It provides annual statistics on hate crimes, detailing offenses, victims, and offenders motivated by bias related to race, gender, gender identity, religion, disability, sexual orientation, or ethnicity. The data is collected from law enforcement agencies through both the Summary Reporting System (SRS) and National Incident-Based Reporting System (NIBRS) forms, contributing to the UCR Program. The dataset includes hate crime incidents reported across the United States, with data collected from law enforcement agencies at the................. (local, state, and federal) levels.
+
+# Methods
+2109 DC hate crimes
+
+# Analysis
+give numbers behind it, counts or percentages, don't just use rankings
+use ranks to identify similarities
+use hate.ranks for the graphs
+
+Interesting fields, turn them into rankings to build the table
+- events per year
+- offender race
+- offense name
+- location name
+- bias
+- victim types
+
+## City 1: Seattle
+
+### Analysis: 
+Seattle is similar to Washington, D.C. based on the attributes of number of events (rank 1 of 33), location name (rank 4 of 33), and victim type. Specifically, for number of events, 2,530 hate crimes have occurred in Seattle which is only 615 more than the 1,915 hate crimes that have occurred in Washington, D.C. Specifically, for location name, 39.21% of hate crimes in Seattle occurred on a highway/road/alley/street/sidewalk which is only 4.13% less than the 39.21% of hate crimes in Washington, D.C. that occurred on a highway/road/alley/street/sidewalk. Specifically, for victim type, 88.77% of hate crimes in Seattle were committed against an individual which is only 0.63% less than the 89.4% of hate crimes in Washington, D.C. that were committed against an individual.
+
+- 1 events - done
+- 4 location - done
+- 6 victim - done
+
+### Visual:
+```{r}
+ggplot(hate.ranks %>%
+         mutate(highlight.seattle = ifelse(City %in% c("Seattle", "Washington"), "Highlighted", "Other")), 
+       aes(y = reorder(City, -Rank.Events), x = Count.Events, fill = highlight.seattle)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("Highlighted" = "red", "Other" = "steelblue"), guide = "none") +
+  labs(title = "Number of Hate Crime Events by City",
+       x = "Number of Events",
+       y = "City (ordered by rank)") +
+  theme_minimal()
+```
+
+## City 2: Portland
+
+### Analysis: 
+Portland is similar to Washington, D.C. based on the attributes of number of events (rank 3 of 33), location name (rank 6 of 33), and bias description (rank 3 of 31). Specifically, for number of events, 1,030 hate crimes have occurred in Portland which is only 885 fewer than the 1,915 hate crimes that have occurred in Washington, D.C. Specifically, for location name, 33.69% of hate crimes in Portland occurred on a highway/road/alley/street/sidewalk which is only 9.65% less than the 39.21% of hate crimes in Washington, D.C. that occurred on a highway/road/alley/street/sidewalk. Specifically, for bias description, 19.81% of hate crimes in Portland were due to anti-gay bias against a male which is only 15.7% less than the 35.51% of hate crimes in Washington, D.C. that were due to anti-gay bias against a male.
+
+- 3 events - done
+- 6 location - done
+- 3 bias - done
+
+### Visual:
+```{r}
+hate.ranks %>%
+  filter(!is.na(Rank.Bias)) %>%
+  mutate(highlight = ifelse(City %in% c("Washington", "Portland"), "Highlighted", "Other")) %>%
+  arrange(Rank.Bias) %>%  # Order by Rank.Bias
+  ggplot(aes(x = PCT.Bias, y = reorder(City, -Rank.Bias), color = highlight)) +
+  geom_point(size = 3) +  # Plot the dots with size 3
+  scale_color_manual(values = c("Highlighted" = "red", "Other" = "steelblue"), guide = "none") +
+  labs(title = "Percent of Anti-Gay (Male) Bias by City",
+       x = "Percent of Anti-Gay (Male) Bias",
+       y = "City (ordered by rank)") +
+  theme_minimal()
+```
+
+## City 3: Denver
+
+### Analysis:
+Denver is similar to Washington, D.C. based on the attributes of number of events (rank 4 of 33), victim type (rank 3 of 33), and location name (rank 5 of 33). Specifically, for number of events per year, 920 hate crimes have occurred in Denver which is only 995 fewer than the 1,915 hate crimes that have occurred in Washington, D.C. Specifically, for victim type, ... Specifically, for location name, 35.98% of hate crimes in Denver occurred on a highway/road/alley/street/sidewalk which is only 7.36% less than the 39.21% of hate crimes in Washington, D.C. that occurred on a highway/road/alley/street/sidewalk. Specifically, for victim type, 89.13% of hate crimes in Denver were committed against an individual which is only 0.27% less than the 89.4% of hate crimes in Washington, D.C. that were committed against an individual.
+
+- 4 events - done
+- 3 victim - done
+- 5 location - done
+
+### Visual: location
+```{r}
+ggplot(hate.ranks %>% 
+         filter(!is.na(PCT.Location)),
+       aes(x = "PCT.Location", y = reorder(City, PCT.Location), fill = PCT.Location)) + 
+  geom_tile() +
+  scale_fill_gradient(low = "steelblue", high = "red") +
+  labs(title = "Heatmap of Location Name by City",
+       x = "Percentage of Offenses (highway/road/alley/street/sidewalk)",
+       y = "City") +
+  geom_text(aes(label = scales::percent(PCT.Location / 100)), color = "white", size = 3) +  # Add percent labels
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+```
+
+## City 4: Atlanta
+
+### Analysis: 
+Atlanta is similar to Washington, D.C. based on the attributes of offender race (rank 4 of 32), offense name (rank 2 of 33), and bias (rank 5 of 31). Specifically, for offender race, 35.48% of offenders in Atlanta are Black or African American which is only 14.75% less than the 50.23% of offenders in Washington, D.C. that are Black or African American. Specifically, for offense name, 32.36% of offenses in Atlanta are simple assault which is only 6.28% less than the 38.54% of offenses in Washington, D.C. that are simple assault. Specifically, for bias description, 19.35% of hate crimes in Atlanta were due to anti-gay bias against a male which is only 16.16% less than the 35.51% of hate crimes in Washington, D.C. that were due to anti-gay bias against a male.
+
+- 4 race - done
+- 2 offense - done
+- 5 bias - done
+
+### Visual:
+```{r}
+hate.ranks %>%
+  filter(City %in% c("Washington", "Atlanta")) %>%
+  mutate(PCT.Offense.Other = 100 - PCT.Offense) %>%  # Calculate the complement of PCT.Offense
+  gather(key = "Category", value = "Percent", PCT.Offense, PCT.Offense.Other) %>%
+  ggplot(aes(x = "", y = Percent, fill = Category)) +
+  geom_bar(stat = "identity", width = 1) +  # Use 'identity' to plot actual values
+  coord_polar(theta = "y") +  # Convert to pie chart
+  facet_wrap(~ City, strip.position = "bottom") +  # Move facet labels to the bottom
+  scale_fill_manual(values = c("PCT.Offense" = "red", "PCT.Offense.Other" = "steelblue")) +  # Custom colors
+  geom_text(aes(label = ifelse(Category == "PCT.Offense", paste0(round(Percent, 1), "%"), "")),  # Only show label for PCT.Offense
+            position = position_stack(vjust = 0.5),  # Place labels at the center of the segments
+            color = "white", size = 5) +  # White text for readability
+  labs(title = "Percent of Simple Assault Offenses by City") +
+  theme_void() +  # Remove background grid lines
+  theme(legend.position = "none",  # Remove legend if not necessary
+        strip.text = element_text(size = 12, hjust = 0.5))  # Adjust facet label size and position
+```
+
+## City 5: Kansas City
+
+### Analysis: 
+Kansas City is similar to Washington, D.C. based on the attributes of offender race (rank 6 of 32), offense name (rank 4 of 33), and victim type (rank 2 of 33). Specifically, for offender race, 30.83% of offenders in Atlanta are Black or African American which is only 19.4% less than the 50.23% of offenders in Washington, D.C. that are Black or African American. Specifically, for offense name, 30% of offenses in Kansas City are simple assault which is only 8.54% less than the 38.54% of offenses in Washington, D.C. that are simple assault. Specifically, for victim type, 89.17% of hate crimes in Kansas City were committed against an individual which is only 0.23% less than the 89.4% of hate crimes in Washington, D.C. that were committed against an individual.
+
+- 6 race - done
+- 4 offense - done
+- 2 victim - done
+
+### Visual:
+```{r}
+ggplot(hate.ranks %>%
+         filter(City != "Washington") %>%
+         mutate(highlight.kc = ifelse(City %in% c("Kansas City"), "Highlighted", "Other")), 
+       aes(y = reorder(City, -Rank.Victim), x = Diff.Victim, fill = highlight.kc)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("Highlighted" = "red", "Other" = "steelblue"), guide = "none") +
+  scale_x_continuous(breaks = seq(0, max(hate.ranks$Diff.Victim), by = 1)) +
+  labs(title = "Difference to D.C. of Individual Victim Type by City",
+       x = "Absolute Percent Difference",
+       y = "City (ordered by rank)") +
+  theme_minimal()
+```
+
+Questions
+- number of events? events per year?
+- include ranks in analysis?
