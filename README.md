@@ -14,8 +14,8 @@ Upon completion of this course students should have a practical comprehension of
 - Apply theoretical explanations and evaluate secondary data in the context of Washington, D.C. to understand the effects of community dynamics, institutional relations, and crime prevention strategies at the neighborhood level. This outcome will be achieved through a series of statistical and spatial analytic projects.
 
 ## Projects
-- [Project 1:](Project%201)
-- [Project 2:](Project%202)
+- [Project 1: D.C. Crime](Project%201)
+- [Project 2: Gun Violence](Project%202)
 - [Project 3:](Project%203)
 - [Project 4:](Project%204)
 - [Project 5:](Project%205)
